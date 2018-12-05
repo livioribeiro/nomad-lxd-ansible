@@ -1,0 +1,14 @@
+[Unit]
+Description="Traefik Proxy"
+Documentation=https://traefik.io
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty=/etc/traefik/traefik.toml
+
+[Service]
+Restart=on-failure
+ExecStart=/usr/local/bin/traefik --configfile=/etc/traefik/traefik.toml
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

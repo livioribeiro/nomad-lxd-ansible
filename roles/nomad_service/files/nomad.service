@@ -1,0 +1,15 @@
+[Unit]
+Description="HashiCorp Nomad - Application scheduler"
+Documentation=https://www.nomadproject.io/
+Requires=network-online.target
+After=network.target
+ConditionFileNotEmpty=/etc/nomad.d/nomad.hcl
+
+[Service]
+Restart=on-failure
+ExecStart=/usr/local/bin/nomad agent -config=/etc/nomad.d/nomad.hcl
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target
+

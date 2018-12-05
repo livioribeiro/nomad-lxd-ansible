@@ -1,0 +1,9 @@
+data_dir  = "/var/nomad"
+
+bind_addr = "{{ ansible_eth0.ipv4.address }}"
+
+client {
+  enabled = true
+  network_interface = "eth0"
+}
+

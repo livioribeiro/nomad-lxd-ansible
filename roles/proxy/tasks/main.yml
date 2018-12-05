@@ -1,0 +1,27 @@
+---
+- name: install traefik
+  copy:
+    src: cache/traefik
+    dest: /usr/local/bin/
+    mode: 0755
+
+- name: create traefik service
+  copy:
+    src: traefik.service
+    dest: /etc/systemd/system/
+
+- name: create traefik config directory
+  file:
+    path: /etc/traefik
+    state: directory
+
+- name: copy traefik config
+  template:
+    src: traefik.toml.j2
+    dest: /etc/traefik/traefik.toml
+
+- name: start traefik
+  service:
+    name: traefik
+    state: restarted
+    enabled: yes

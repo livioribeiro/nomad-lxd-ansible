@@ -1,0 +1,13 @@
+data_dir  = "/var/nomad"
+
+advertise {
+  http = "{{ ansible_eth0.ipv4.address }}"
+  rpc  = "{{ ansible_eth0.ipv4.address }}"
+  serf = "{{ ansible_eth0.ipv4.address }}"
+}
+
+server {
+  enabled          = true
+  bootstrap_expect = 3
+  raft_protocol    = 3
+}

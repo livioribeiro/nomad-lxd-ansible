@@ -1,0 +1,14 @@
+---
+- import_role:
+    name: nomad_service
+
+- name: copy nomad config
+  template:
+    src: nomad.hcl.j2
+    dest: /etc/nomad.d/nomad.hcl
+
+- name: start nomad
+  service:
+    name: nomad
+    state: restarted
+    enabled: yes

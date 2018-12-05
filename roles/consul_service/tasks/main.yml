@@ -1,0 +1,19 @@
+---
+- name: install consul
+  copy:
+    src: cache/consul
+    dest: /usr/local/bin/
+    mode: 0755
+
+- name: create consul service
+  copy:
+    src: consul.service
+    dest: /etc/systemd/system/
+
+- name: create consul directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /etc/consul.d
+    - /var/consul

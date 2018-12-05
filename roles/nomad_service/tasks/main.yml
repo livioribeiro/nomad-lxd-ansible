@@ -1,0 +1,19 @@
+---
+- name: install nomad
+  copy:
+    src: cache/nomad
+    dest: /usr/local/bin/
+    mode: 0755
+
+- name: create nomad service
+  copy:
+    src: nomad.service
+    dest: /etc/systemd/system/
+
+- name: create nomad directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /etc/nomad.d
+    - /var/nomad

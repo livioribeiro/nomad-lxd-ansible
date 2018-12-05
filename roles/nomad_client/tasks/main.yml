@@ -1,0 +1,32 @@
+---
+- import_role:
+    name: nomad_service
+
+- name: update apt cache
+  apt:
+    update_cache: yes
+
+- name: install docker and openjdk
+  apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - docker.io
+      - openjdk-11-jdk-headless
+
+- name: start docker service
+  service:
+    name: docker
+    state: started
+
+- name: copy nomad config
+  template:
+    src: nomad.hcl.j2
+    dest: /etc/nomad.d/nomad.hcl
+
+- name: start nomad
+  service:
+    name: nomad
+    state: restarted
+    enabled: yes
