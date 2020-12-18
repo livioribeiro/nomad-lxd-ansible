@@ -2,6 +2,39 @@
 - import_role:
     name: consul_service
 
+- name: install dnsmasq
+  apt:
+    name: dnsmasq
+    state: present
+    update_cache: yes
+
+- name: copy dnsmasq configuration
+  copy:
+    src: dnsmasq.conf
+    dest: /etc/dnsmasq.conf
+
+- name: disable systemd-resolved
+  service:
+    name: systemd-resolved
+    state: stopped
+    enabled: no
+
+- name: enable dnsmasq
+  service:
+    name: dnsmasq
+    state: started
+    enabled: yes
+
+- name: remove resolv.conf
+  file:
+    path: /etc/resolv.conf
+    state: absent
+
+- name: copy resolv.conf
+  copy:
+    src: resolv.conf
+    dest: /etc/resolv.conf
+
 - name: copy consul config
   template:
     src: consul.hcl.j2

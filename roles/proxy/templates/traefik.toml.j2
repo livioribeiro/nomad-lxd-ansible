@@ -1,3 +1,11 @@
+[accessLog]
+  filePath = "/var/log/traefik/access.log"
+
+[api]
+  dashboard = true
+  insecure = true
+  debug = true
+
 [providers]
   [providers.file]
     directory = "/etc/traefik/conf/"
@@ -6,8 +14,3 @@
     defaultRule = "Host(`{{ '{{' }} .Name {{ '}}' }}.service.{{ ansible_eth0.ipv4.address }}.nip.io`)"
     [providers.consulCatalog.endpoint]
       address = "127.0.0.1:8500"
-
-[api]
-dashboard = true
-insecure = true
-debug = true
