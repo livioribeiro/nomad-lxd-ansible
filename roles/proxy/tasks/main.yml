@@ -20,6 +20,16 @@
     src: traefik.toml.j2
     dest: /etc/traefik/traefik.toml
 
+- name: create traefik file provider directory
+  file:
+    path: /etc/traefik/conf
+    state: directory
+
+- name: copy traefik file provider config
+  template:
+    src: nomad.toml.j2
+    dest: /etc/traefik/conf/nomad.toml
+
 - name: start traefik
   service:
     name: traefik

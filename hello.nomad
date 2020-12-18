@@ -3,30 +3,26 @@ job "hello-world" {
 
   group "example" {
     count = 3
+
+    network {
+      # require a random port named "http"
+      port "http" {}
+    }
+
     task "server" {
       # we will run a docker container
       driver = "docker"
-
-      # resouces required by the task
-      resources {
-        network {
-          # require a random port named "http"
-          port "http" {}
-        }
-      }
 
       config {
         # docker image to run
         image = "hashicorp/http-echo"
         args = [
-          "-listen", ":8080",
+          "-listen", ":${NOMAD_PORT_http}",
           "-text", "hello world",
         ]
-
-        # map the random port to port 8080 on the task
-        port_map = {
-          http = 8080
-        }
+        ports = [
+          "http"
+        ]
       }
 
       # exposed service

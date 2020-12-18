@@ -1,38 +1,13 @@
-[file]
-
-# Backends
-[backends]
-  [backends.consul]
-    [backends.consul.servers]
-    {% for host in groups['consul_servers'] %}
-      [backends.consul.servers.{{ host }}]
-        url = "http://{{ hostvars[host].ansible_eth0.ipv4.address }}:8500"
-    {% endfor %}
-
-  [backends.nomad]
-    [backends.nomad.servers]
-    {% for host in groups['nomad_servers'] %}
-      [backends.nomad.servers.{{ host }}]
-        url = "http://{{ hostvars[host].ansible_eth0.ipv4.address }}:4646"
-    {% endfor %}
-
-# Frontends
-[frontends]
-  [frontends.consul]
-  backend = "consul"
-    [frontends.consul.routes.route1]
-    rule = "Host:consul.{{ ansible_eth0.ipv4.address }}.nip.io"
-
-  [frontends.nomad]
-  backend = "nomad"
-    [frontends.nomad.routes.route1]
-    rule = "Host:nomad.{{ ansible_eth0.ipv4.address }}.nip.io"
-
-[consulCatalog]
-endpoint = "127.0.0.1:8500"
-exposedByDefault = false
-domain = "service.{{ ansible_eth0.ipv4.address }}.nip.io"
+[providers]
+  [providers.file]
+    directory = "/etc/traefik/conf/"
+  [providers.consulCatalog]
+    exposedByDefault = false
+    defaultRule = "Host(`{{ '{{' }} .Name {{ '}}' }}.service.{{ ansible_eth0.ipv4.address }}.nip.io`)"
+    [providers.consulCatalog.endpoint]
+      address = "127.0.0.1:8500"
 
 [api]
 dashboard = true
+insecure = true
 debug = true

@@ -4,12 +4,12 @@
   connection: local
   # set urls as variables
   vars:
-    consul_version: "1.4.0"
-    nomad_version: "0.8.6"
-    traefik_version: "1.7.5"
+    consul_version: "1.9.0"
+    nomad_version: "1.0.1"
+    traefik_version: "2.3.6"
     consul_url: "https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_linux_amd64.zip"
     nomad_url: "https://releases.hashicorp.com/nomad/{{ nomad_version }}/nomad_{{ nomad_version }}_linux_amd64.zip"
-    traefik_url: "https://github.com/containous/traefik/releases/download/v{{ traefik_version }}/traefik_linux-amd64"
+    traefik_url: "https://github.com/traefik/traefik/releases/download/v{{ traefik_version }}/traefik_v{{ traefik_version }}_linux_amd64.tar.gz"
   tasks:
     - name: create containers
       # get all host names from inventory
@@ -23,7 +23,7 @@
           type: image
           mode: pull
           server: https://images.linuxcontainers.org
-          alias: ubuntu/bionic/amd64
+          alias: ubuntu/focal/amd64
         config:
           # nomad clients need some privileges to be able to run docker containers
           security.nesting: "{{ 'true' if item in ['nomad-client1', 'nomad-client2', 'nomad-client3'] else 'false' }}"
@@ -58,8 +58,14 @@
     - name: fecth traefik
       get_url:
         url: "{{ traefik_url }}"
-        dest: cache/traefik
+        dest: cache/traefik.tar.gz
         mode: 0755
+
+    - name: extract traefik
+      shell: "tar -xzf traefik.tar.gz traefik"
+      args:
+        chdir: cache
+        creates: traefik
 
 - hosts: consul_servers
   roles:

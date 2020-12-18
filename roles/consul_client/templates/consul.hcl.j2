@@ -5,3 +5,5 @@ advertise_addr = "{{ ansible_eth0.ipv4.address }}"
 client_addr = "127.0.0.1 {{ ansible_eth0.ipv4.address }}"
 enable_script_checks = true
 retry_join = [ "{{ hostvars.consul1.ansible_hostname }}" ]
+
+recursors = ["1.1.1.1"]
