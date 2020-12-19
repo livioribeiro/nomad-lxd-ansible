@@ -19,12 +19,6 @@
     state: stopped
     enabled: no
 
-- name: enable dnsmasq
-  service:
-    name: dnsmasq
-    state: started
-    enabled: yes
-
 - name: remove resolv.conf
   file:
     path: /etc/resolv.conf
@@ -34,6 +28,12 @@
   copy:
     src: resolv.conf
     dest: /etc/resolv.conf
+
+- name: enable dnsmasq
+  service:
+    name: dnsmasq
+    state: started
+    enabled: yes
 
 - name: copy consul config
   template:

@@ -2,15 +2,19 @@
 - import_role:
     name: nomad_service
 
-- name: install docker and openjdk
+- name: update apt cache
   apt:
-    name: "{{ packages }}"
-    state: present
     update_cache: yes
-  vars:
-    packages:
-      - docker.io
-      - openjdk-11-jdk-headless
+
+- name: install docker
+  apt:
+    name: docker.io
+    state: present
+
+- name: install openjdk
+  apt:
+    name: openjdk-11-jdk-headless
+    state: present
 
 - name: start docker service
   service:

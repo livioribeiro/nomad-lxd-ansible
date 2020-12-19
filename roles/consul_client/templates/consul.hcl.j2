@@ -1,7 +1,11 @@
 data_dir = "/var/consul"
-server = false
 
+server = false
 advertise_addr = "{{ ansible_eth0.ipv4.address }}"
 client_addr = "127.0.0.1{% for addr in ansible_all_ipv4_addresses %} {{ addr }}{% endfor %}"
-enable_script_checks = true
+
 retry_join = [ "{{ hostvars.consul1.ansible_hostname }}" ]
+
+connect {
+    enabled = true
+}
