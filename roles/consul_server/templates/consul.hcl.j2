@@ -4,7 +4,9 @@ server = true
 advertise_addr = "{{ ansible_eth0.ipv4.address }}"
 client_addr = "127.0.0.1 {{ ansible_eth0.ipv4.address }}"
 
-ui = true
+ui_config {
+    enabled = true
+}
 
 connect {
     enabled = true

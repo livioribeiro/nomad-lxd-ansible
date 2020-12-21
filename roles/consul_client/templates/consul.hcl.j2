@@ -6,6 +6,10 @@ client_addr = "127.0.0.1{% for addr in ansible_all_ipv4_addresses %} {{ addr }}{
 
 retry_join = [ "{{ hostvars.consul1.ansible_hostname }}" ]
 
+ports {
+    grpc = 8502
+}
+
 connect {
     enabled = true
 }

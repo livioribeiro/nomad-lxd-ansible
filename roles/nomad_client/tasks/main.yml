@@ -2,19 +2,71 @@
 - import_role:
     name: nomad_service
 
+- name: install gpg
+  apt:
+    name: gpg
+    state: present
+
+- name: add envoy apt key
+  apt_key:
+    url: https://getenvoy.io/gpg
+    state: present
+
+- name: add envoy apt repository
+  apt_repository:
+    repo: deb [arch=amd64] https://dl.bintray.com/tetrate/getenvoy-deb focal stable
+    state: present
+
+- name: add docker apt key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: add docker apt repository
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+    state: present
+
+
 - name: update apt cache
   apt:
     update_cache: yes
 
+- name: install envoy
+  apt:
+    name: getenvoy-envoy
+    state: present
+
 - name: install docker
   apt:
-    name: docker.io
+    name: "{{ item.package }}"
     state: present
+  loop:
+    - package: docker-ce
+    - package: containerd.io 
 
 - name: install openjdk
   apt:
     name: openjdk-11-jdk-headless
     state: present
+
+- name: allow bridge network
+  shell: "echo 1 > {{ item.dest }}"
+  loop:
+    - dest: /proc/sys/net/bridge/bridge-nf-call-arptables
+    - dest: /proc/sys/net/bridge/bridge-nf-call-ip6tables
+    - dest: /proc/sys/net/bridge/bridge-nf-call-iptables
+
+- name: persist bridge network permission
+  copy:
+    src: bridge-network.conf
+    dest: /etc/sysctl.d/bridge-network.conf
+
+- name: copy cni plugins
+  copy:
+    src: cache/cni-plugins/
+    dest: /opt/cni/bin/
+    mode: 755
 
 - name: start docker service
   service:
