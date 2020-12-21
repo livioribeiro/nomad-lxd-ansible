@@ -2,16 +2,6 @@
 - hosts: localhost
   # run this task in the host
   connection: local
-  # set urls as variables
-  vars:
-    consul_version: "1.9.0"
-    nomad_version: "1.0.1"
-    traefik_version: "2.3.6"
-    cni_plugins_version: "0.9.0"
-    consul_url: "https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_linux_amd64.zip"
-    nomad_url: "https://releases.hashicorp.com/nomad/{{ nomad_version }}/nomad_{{ nomad_version }}_linux_amd64.zip"
-    traefik_url: "https://github.com/traefik/traefik/releases/download/v{{ traefik_version }}/traefik_v{{ traefik_version }}_linux_amd64.tar.gz"
-    cni_plugins_url: "https://github.com/containernetworking/plugins/releases/download/v{{ cni_plugins_version }}/cni-plugins-linux-amd64-v{{ cni_plugins_version }}.tgz"
   tasks:
     - name: create containers
       # get all host names from inventory
@@ -28,8 +18,8 @@
           alias: ubuntu/focal/amd64
         config:
           # nomad clients need some privileges to be able to run docker containers
-          security.nesting: "{{ 'true' if item in ['nomad-client1', 'nomad-client2', 'nomad-client3'] else 'false' }}"
-          security.privileged: "{{ 'true' if item in ['nomad-client1', 'nomad-client2', 'nomad-client3'] else 'false' }}"
+          security.nesting: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
+          security.privileged: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
         devices:
           # configure network interface
           eth0:

@@ -9,24 +9,23 @@
 
 - name: add envoy apt key
   apt_key:
-    url: https://getenvoy.io/gpg
+    url: "{{ envoy_gpg_url }}"
     state: present
 
 - name: add envoy apt repository
   apt_repository:
-    repo: deb [arch=amd64] https://dl.bintray.com/tetrate/getenvoy-deb focal stable
+    repo: "{{ envoy_repo }}"
     state: present
 
 - name: add docker apt key
   apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
+    url: "{{ docker_gpg_url }}"
     state: present
 
 - name: add docker apt repository
   apt_repository:
-    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+    repo: "{{ docker_repo }}"
     state: present
-
 
 - name: update apt cache
   apt:
