@@ -21,7 +21,7 @@
           security.nesting: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
           security.privileged: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
         # uncomment if you installed lxd using snap
-        url: unix:/var/snap/lxd/common/lxd/unix.socket
+        # url: unix:/var/snap/lxd/common/lxd/unix.socket
 
 - hosts: consul_servers
   roles:
