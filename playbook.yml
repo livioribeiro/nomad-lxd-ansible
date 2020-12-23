@@ -23,27 +23,6 @@
         # uncomment if you installed lxd using snap
         url: unix:/var/snap/lxd/common/lxd/unix.socket
 
-    # ensure cache directory exists
-    - name: create cache directory
-      file:
-        path: cache
-        state: directory
-  
-    # - name: fetch cni plugins
-    #   get_url:
-    #     url: "{{ cni_plugins_url }}"
-    #     dest: cache/cni-plugins.tgz
-
-    # - name: create plugins directory
-    #   file:
-    #     path: cache/cni-plugins
-    #     state: directory
-
-    # - name: extract cni plugins
-    #   command: tar -xzf cni-plugins.tgz -C cni-plugins/
-    #   args:
-    #     chdir: cache
-
 - hosts: consul_servers
   roles:
     - consul_server
