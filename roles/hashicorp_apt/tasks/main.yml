@@ -1,0 +1,19 @@
+---
+- name: install gpg
+  apt:
+    name: gpg
+    state: present
+
+- name: add hashicorp apt key
+  apt_key:
+    url: "{{ hashicorp_gpg_url }}"
+    state: present
+
+- name: add hashicorp apt repository
+  apt_repository:
+    repo: "{{ hashicorp_repo }}"
+    state: present
+
+- name: update apt cache
+  apt:
+    update_cache: yes

@@ -1,0 +1,18 @@
+[all:vars]
+
+consul_version = 1.9.1
+nomad_version = 1.0.1
+traefik_version = 2.3.6
+cni_plugins_version = 0.9.0
+
+traefik_url = https://github.com/traefik/traefik/releases/download/v{{ traefik_version }}/traefik_v{{ traefik_version }}_linux_amd64.tar.gz
+cni_plugins_url = https://github.com/containernetworking/plugins/releases/download/v{{ cni_plugins_version }}/cni-plugins-linux-amd64-v{{ cni_plugins_version }}.tgz
+
+hashicorp_gpg_url = https://apt.releases.hashicorp.com/gpg
+hashicorp_repo = deb [arch=amd64] https://apt.releases.hashicorp.com focal main
+
+envoy_gpg_url = https://getenvoy.io/gpg
+envoy_repo = deb [arch=amd64] https://dl.bintray.com/tetrate/getenvoy-deb focal stable
+
+docker_gpg_url = https://download.docker.com/linux/ubuntu/gpg
+docker_repo = deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable

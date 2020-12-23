@@ -7,7 +7,7 @@
       # get all host names from inventory
       loop: "{{ groups['all'] }}"
       # use lxd_container module from ansible to create containers
-      lxd_container:
+      community.general.lxd_container:
         # container name is the hostname
         name: "{{ item }}"
         state: started
@@ -20,14 +20,6 @@
           # nomad clients need some privileges to be able to run docker containers
           security.nesting: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
           security.privileged: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
-        devices:
-          # configure network interface
-          eth0:
-            type: nic
-            nictype: bridged
-            parent: lxdbr0
-            # get ip address from inventory
-            ipv4.address: "{{ hostvars[item].ip_address }}"
         # uncomment if you installed lxd using snap
         url: unix:/var/snap/lxd/common/lxd/unix.socket
 
@@ -36,44 +28,21 @@
       file:
         path: cache
         state: directory
-
-    - name: fetch applications
-      unarchive:
-        src: "{{ item.url }}"
-        dest: cache
-        creates: "cache/{{ item.file }}"
-        remote_src: yes
-      loop:
-        - url: "{{ consul_url }}"
-          file: consul
-        - url: "{{ nomad_url }}"
-          file: nomad
   
-    - name: fetch cni plugins
-      get_url:
-        url: "{{ cni_plugins_url }}"
-        dest: cache/cni-plugins.tgz
+    # - name: fetch cni plugins
+    #   get_url:
+    #     url: "{{ cni_plugins_url }}"
+    #     dest: cache/cni-plugins.tgz
 
-    - name: create plugins directory
-      file:
-        path: cache/cni-plugins
-        state: directory
+    # - name: create plugins directory
+    #   file:
+    #     path: cache/cni-plugins
+    #     state: directory
 
-    - name: extract cni plugins
-      command: tar -xzf cni-plugins.tgz -C cni-plugins/
-      args:
-        chdir: cache
-
-    - name: fecth traefik
-      get_url:
-        url: "{{ traefik_url }}"
-        dest: cache/traefik.tar.gz
-
-    - name: extract traefik
-      command: tar -xzf traefik.tar.gz traefik
-      args:
-        chdir: cache
-        creates: traefik
+    # - name: extract cni plugins
+    #   command: tar -xzf cni-plugins.tgz -C cni-plugins/
+    #   args:
+    #     chdir: cache
 
 - hosts: consul_servers
   roles:

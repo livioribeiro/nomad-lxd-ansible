@@ -1,19 +1,13 @@
-proxy           ip_address=10.99.0.100
+proxy
 
 [consul_servers]
-consul1         ip_address=10.99.0.101
-consul2         ip_address=10.99.0.102
-consul3         ip_address=10.99.0.103
+consul[1:3]
 
 [nomad_servers]
-nomad-server1   ip_address=10.99.0.111
-nomad-server2   ip_address=10.99.0.112
-nomad-server3   ip_address=10.99.0.113
+nomad-server[1:3]
 
 [nomad_clients]
-nomad-client1   ip_address=10.99.0.121
-nomad-client2   ip_address=10.99.0.122
-nomad-client3   ip_address=10.99.0.123
+nomad-client[1:3]
 
 [all:vars]
 ansible_connection=lxd

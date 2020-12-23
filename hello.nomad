@@ -2,6 +2,7 @@ job "hello-world" {
   datacenters = ["dc1"]
 
   group "example" {
+    # 3 replicas
     count = 3
 
     network {
@@ -17,9 +18,10 @@ job "hello-world" {
         # docker image to run
         image = "hashicorp/http-echo"
         args = [
-          "-listen", ":${NOMAD_PORT_http}",
+          "-listen", ":${NOMAD_PORT_http}", # reference the random port
           "-text", "hello world",
         ]
+        # expose ports to the container
         ports = [
           "http"
         ]

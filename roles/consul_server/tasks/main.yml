@@ -7,7 +7,7 @@
     src: consul.hcl.j2
     dest: /etc/consul.d/consul.hcl
 
-- name: start consul
+- name: restart consul
   service:
     name: consul
     state: restarted

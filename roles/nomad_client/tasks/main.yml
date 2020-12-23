@@ -2,11 +2,6 @@
 - import_role:
     name: nomad_service
 
-- name: install gpg
-  apt:
-    name: gpg
-    state: present
-
 - name: add envoy apt key
   apt_key:
     url: "{{ envoy_gpg_url }}"
@@ -16,6 +11,12 @@
   apt_repository:
     repo: "{{ envoy_repo }}"
     state: present
+
+- name: install envoy
+  apt:
+    name: getenvoy-envoy
+    state: present
+    update_cache: yes
 
 - name: add docker apt key
   apt_key:
@@ -27,58 +28,35 @@
     repo: "{{ docker_repo }}"
     state: present
 
-- name: update apt cache
-  apt:
-    update_cache: yes
-
-- name: install envoy
-  apt:
-    name: getenvoy-envoy
-    state: present
-
 - name: install docker
   apt:
-    name: "{{ item.package }}"
+    name: docker-ce
     state: present
-  loop:
-    - package: docker-ce
-    - package: containerd.io 
+    update_cache: yes
 
-- name: install openjdk
-  apt:
-    name: openjdk-11-jdk-headless
-    state: present
+# - name: install openjdk
+#   apt:
+#     name: openjdk-11-jdk-headless
+#     state: present
 
-- name: allow bridge network
-  shell: "echo 1 > {{ item.dest }}"
-  loop:
-    - dest: /proc/sys/net/bridge/bridge-nf-call-arptables
-    - dest: /proc/sys/net/bridge/bridge-nf-call-ip6tables
-    - dest: /proc/sys/net/bridge/bridge-nf-call-iptables
+- name: create cni plugins directory
+  file:
+    path: /opt/cni/bin
+    state: directory
 
-- name: persist bridge network permission
-  copy:
-    src: bridge-network.conf
-    dest: /etc/sysctl.d/bridge-network.conf
-
-- name: copy cni plugins
-  copy:
-    src: cache/cni-plugins/
+- name: install cni plugins
+  unarchive:
+    src: "{{ cni_plugins_url }}"
+    remote_src: yes
     dest: /opt/cni/bin/
-    mode: 755
-
-- name: start docker service
-  service:
-    name: docker
-    state: started
+    mode: 0755
 
 - name: copy nomad config
   template:
     src: nomad.hcl.j2
     dest: /etc/nomad.d/nomad.hcl
 
-- name: start nomad
+- name: restart nomad
   service:
     name: nomad
     state: restarted
-    enabled: yes

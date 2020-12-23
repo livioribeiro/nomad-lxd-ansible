@@ -1,19 +1,15 @@
 ---
+- import_role:
+    name: hashicorp_apt
+
 - name: install nomad
-  copy:
-    src: cache/nomad
-    dest: /usr/local/bin/
-    mode: 0755
+  apt:
+    name: nomad
+    state: present
 
-- name: create nomad service
-  copy:
-    src: nomad.service
-    dest: /etc/systemd/system/
-
-- name: create nomad directories
+- name: create nomad directory
   file:
-    path: "{{ item }}"
+    path: /var/nomad
     state: directory
-  loop:
-    - /etc/nomad.d
-    - /var/nomad
+    owner: nomad
+    group: nomad

@@ -1,9 +1,12 @@
 ---
 - name: install traefik
-  copy:
-    src: cache/traefik
+  unarchive:
+    src: "{{ traefik_url }}"
+    remote_src: yes
     dest: /usr/local/bin/
     mode: 0755
+    extra_opts:
+      - traefik
 
 - name: create traefik service
   copy:
