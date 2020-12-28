@@ -4,11 +4,8 @@
   connection: local
   tasks:
     - name: create containers
-      # get all host names from inventory
       loop: "{{ groups['all'] }}"
-      # use lxd_container module from ansible to create containers
       community.general.lxd_container:
-        # container name is the hostname
         name: "{{ item }}"
         state: started
         source:
@@ -21,7 +18,21 @@
           security.nesting: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
           security.privileged: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
         # uncomment if you installed lxd using snap
-        # url: unix:/var/snap/lxd/common/lxd/unix.socket
+        url: unix:/var/snap/lxd/common/lxd/unix.socket
+    
+    - name: add port maps
+      community.general.lxd_container:
+        name: proxy
+        devices:
+          map_port_80:
+            type: proxy
+            listen: tcp:127.0.0.1:80
+            connect: tcp:127.0.0.1:80
+          map_port_8080:
+            type: proxy
+            listen: tcp:127.0.0.1:8080
+            connect: tcp:127.0.0.1:8080
+        url: unix:/var/snap/lxd/common/lxd/unix.socket
 
 - hosts: consul_servers
   roles:

@@ -2,11 +2,11 @@
   [http.routers]
     [http.routers.consul]
       service = "consul"
-      rule = "Host(`consul.{{ ansible_eth0.ipv4.address }}.nip.io`)"
+      rule = "Host(`consul.127.0.0.1.nip.io`)"
 
     [http.routers.nomad]
       service = "nomad"
-      rule = "Host(`nomad.{{ ansible_eth0.ipv4.address }}.nip.io`)"
+      rule = "Host(`nomad.127.0.0.1.nip.io`)"
 
   [http.services]
     [http.services.consul]
