@@ -11,14 +11,18 @@
   [http.services]
     [http.services.consul]
       [http.services.consul.loadBalancer]
-        {% for host in groups['consul_servers'] -%}
         [[http.services.consul.loadBalancer.servers]]
-          url = "http://{{ host }}:8500"
-        {% endfor %}
+          url = "http://consul1:8500"
+        [[http.services.consul.loadBalancer.servers]]
+          url = "http://consul2:8500"
+        [[http.services.consul.loadBalancer.servers]]
+          url = "http://consul3:8500"
 
     [http.services.nomad]
       [http.services.nomad.loadBalancer]
-        {% for host in groups['nomad_servers'] -%}
         [[http.services.nomad.loadBalancer.servers]]
-          url = "http://{{ host }}:4646"
-        {% endfor %}
+          url = "http://nomad-server1:4646"
+        [[http.services.nomad.loadBalancer.servers]]
+          url = "http://nomad-server2:4646"
+        [[http.services.nomad.loadBalancer.servers]]
+          url = "http://nomad-server3:4646"

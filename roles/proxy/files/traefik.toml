@@ -11,4 +11,4 @@
     directory = "/etc/traefik/conf/"
   [providers.consulCatalog]
     exposedByDefault = false
-    defaultRule = "Host(`{{ '{{' }} .Name {{ '}}' }}.service.127.0.0.1.nip.io`)"
+    defaultRule = "Host(`{{ .Name }}.service.127.0.0.1.nip.io`)"

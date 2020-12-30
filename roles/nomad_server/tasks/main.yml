@@ -3,8 +3,8 @@
     name: nomad_service
 
 - name: copy nomad config
-  template:
-    src: nomad.hcl.j2
+  copy:
+    src: nomad.hcl
     dest: /etc/nomad.d/nomad.hcl
 
 - name: restart nomad
