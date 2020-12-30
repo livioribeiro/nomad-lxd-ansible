@@ -13,12 +13,12 @@
       [http.services.consul.loadBalancer]
         {% for host in groups['consul_servers'] -%}
         [[http.services.consul.loadBalancer.servers]]
-          url = "http://{{ hostvars[host].ansible_eth0.ipv4.address }}:8500"
+          url = "http://{{ host }}:8500"
         {% endfor %}
 
     [http.services.nomad]
       [http.services.nomad.loadBalancer]
         {% for host in groups['nomad_servers'] -%}
         [[http.services.nomad.loadBalancer.servers]]
-          url = "http://{{ hostvars[host].ansible_eth0.ipv4.address }}:4646"
+          url = "http://{{ host }}:4646"
         {% endfor %}

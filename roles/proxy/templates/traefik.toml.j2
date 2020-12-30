@@ -11,6 +11,4 @@
     directory = "/etc/traefik/conf/"
   [providers.consulCatalog]
     exposedByDefault = false
-    defaultRule = "Host(`{{ '{{' }} .Name {{ '}}' }}.service.{{ ansible_eth0.ipv4.address }}.nip.io`)"
-    [providers.consulCatalog.endpoint]
-      address = "127.0.0.1:8500"
+    defaultRule = "Host(`{{ '{{' }} .Name {{ '}}' }}.service.127.0.0.1.nip.io`)"

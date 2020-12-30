@@ -1,8 +1,8 @@
 data_dir = "/var/consul"
 
 server = true
-advertise_addr = "{{ ansible_eth0.ipv4.address }}"
-client_addr = "127.0.0.1 {{ ansible_eth0.ipv4.address }}"
+advertise_addr = "{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
+client_addr = "127.0.0.1 {{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
 
 ui_config {
     enabled = true
@@ -15,5 +15,5 @@ connect {
 {% if ansible_hostname == 'consul1' -%}
 bootstrap_expect = 3
 {% else -%}
-retry_join = [ "{{ hostvars.consul1.ansible_hostname }}" ]
+retry_join = [ "consul1" ]
 {% endif %}
