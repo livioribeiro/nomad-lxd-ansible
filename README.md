@@ -17,9 +17,9 @@ and for the service mesh
 Traefik is the entrypoint of the cluster.
 It will use Consul service catalog to expose the services.
 
-The proxy configuration exposes the services at `{{ service name }}.service.{{ traefik ip }}.nip.io`,
+The proxy configuration exposes the services at `{{ service name }}.service.127.0.0.1.nip.io`,
 so when you deploy the service [hello.nomad](hello.nomad),
-it will be exposed at `hello-world.service.{{ traefik ip }}.nip.io`
+it will be exposed at `hello-world.service.127.0.0.1.nip.io`
 
 There are 2 example jobs:
 
