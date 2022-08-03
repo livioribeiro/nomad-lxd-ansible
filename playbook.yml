@@ -13,7 +13,7 @@
           mode: pull
           server: https://images.linuxcontainers.org
           protocol: simplestreams
-          alias: ubuntu/focal/amd64
+          alias: ubuntu/jammy/amd64
         config:
           # nomad clients need some privileges to be able to run docker containers
           security.nesting: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
@@ -25,11 +25,11 @@
         devices:
           map_port_80:
             type: proxy
-            listen: tcp:127.0.0.1:80
+            listen: tcp:0.0.0.0:80
             connect: tcp:127.0.0.1:80
           map_port_8080:
             type: proxy
-            listen: tcp:127.0.0.1:8080
+            listen: tcp:0.0.0.0:8080
             connect: tcp:127.0.0.1:8080
 
 - hosts: consul_servers
