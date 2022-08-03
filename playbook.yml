@@ -12,6 +12,7 @@
           type: image
           mode: pull
           server: https://images.linuxcontainers.org
+          protocol: simplestreams
           alias: ubuntu/focal/amd64
         config:
           # nomad clients need some privileges to be able to run docker containers
