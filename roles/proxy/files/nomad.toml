@@ -2,11 +2,11 @@
   [http.routers]
     [http.routers.consul]
       service = "consul"
-      rule = "Host(`consul.127.0.0.1.nip.io`)"
+      rule = "Host(`consul.localhost`)"
 
     [http.routers.nomad]
       service = "nomad"
-      rule = "Host(`nomad.127.0.0.1.nip.io`)"
+      rule = "Host(`nomad.localhost`)"
 
   [http.services]
     [http.services.consul]

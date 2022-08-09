@@ -1,7 +1,11 @@
 proxy
+prometheus
 
 [consul_servers]
 consul[1:3]
+
+[vault_servers]
+vault1
 
 [nomad_servers]
 nomad-server[1:3]

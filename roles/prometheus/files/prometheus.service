@@ -1,0 +1,14 @@
+[Unit]
+Description="Prometheus"
+Documentation=https://prometheus.io
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty=/etc/prometheus/prometheus.yaml
+
+[Service]
+Restart=on-failure
+ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yaml
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

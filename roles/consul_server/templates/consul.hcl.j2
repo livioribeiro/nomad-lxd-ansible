@@ -4,16 +4,37 @@ server = true
 advertise_addr = "{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
 client_addr = "127.0.0.1 {{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
 
-ui_config {
-    enabled = true
-}
-
-connect {
-    enabled = true
-}
-
 {% if ansible_hostname == 'consul1' -%}
 bootstrap_expect = 3
 {% else -%}
 retry_join = [ "consul1" ]
 {% endif %}
+
+ui_config {
+  enabled = true
+  metrics_provider = "prometheus"
+  metrics_proxy {
+    base_url = "http://prometheus:9090"
+  }
+}
+
+connect {
+  enabled = true
+}
+
+telemetry {
+  prometheus_retention_time = "10s"
+  disable_hostname = true
+}
+
+config_entries {
+  bootstrap = [
+    {
+      Kind = "proxy-defaults"
+      Name = "global"
+      Config {
+        envoy_prometheus_bind_addr = "0.0.0.0:9999"
+      }
+    }
+  ]
+}

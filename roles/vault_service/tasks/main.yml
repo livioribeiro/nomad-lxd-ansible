@@ -1,0 +1,15 @@
+---
+- import_role:
+    name: hashicorp_apt
+
+- name: install vault
+  apt:
+    name: vault
+    state: present
+
+- name: create vault directory
+  file:
+    path: /var/vault
+    state: directory
+    owner: vault
+    group: vault

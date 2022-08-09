@@ -5,7 +5,7 @@
     remote_src: yes
     dest: /usr/local/bin/
     mode: 0755
-    extra_opts:
+    include:
       - traefik
 
 - name: create traefik service
@@ -29,9 +29,12 @@
     state: directory
 
 - name: copy traefik file provider config
+  loop:
+    - nomad
+    - prometheus
   copy:
-    src: nomad.toml
-    dest: /etc/traefik/conf/nomad.toml
+    src: "{{ item }}.toml"
+    dest: /etc/traefik/conf/{{ item }}.toml
 
 - name: start traefik
   service:

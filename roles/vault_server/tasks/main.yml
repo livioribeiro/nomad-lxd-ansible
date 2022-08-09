@@ -1,0 +1,14 @@
+---
+- import_role:
+    name: vault_service
+
+- name: copy vault config
+  copy:
+    src: vault.hcl
+    dest: /etc/vault.d/vault.hcl
+
+- name: restart vault
+  service:
+    name: vault
+    state: restarted
+    enabled: yes

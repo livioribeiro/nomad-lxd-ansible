@@ -13,7 +13,7 @@
           mode: pull
           server: https://images.linuxcontainers.org
           protocol: simplestreams
-          alias: ubuntu/jammy/amd64
+          alias: "ubuntu/{{ ubuntu_version }}/amd64"
         config:
           # nomad clients need some privileges to be able to run docker containers
           security.nesting: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
@@ -36,6 +36,11 @@
   roles:
     - consul_server
 
+- hosts: vault_servers
+  roles:
+    - consul_client
+    - vault_server
+
 - hosts: nomad_servers
   roles:
     - consul_client
@@ -45,6 +50,11 @@
   roles:
     - consul_client
     - nomad_client
+
+- hosts: prometheus
+  roles:
+    - consul_client
+    - prometheus
 
 - hosts: proxy
   roles:

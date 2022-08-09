@@ -1,0 +1,11 @@
+[http]
+  [http.routers]
+    [http.routers.prometheus]
+      service = "prometheus"
+      rule = "Host(`prometheus.localhost`)"
+
+  [http.services]
+    [http.services.prometheus]
+      [http.services.prometheus.loadBalancer]
+        [[http.services.prometheus.loadBalancer.servers]]
+          url = "http://prometheus:9090"
