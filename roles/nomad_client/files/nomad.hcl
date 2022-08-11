@@ -11,3 +11,12 @@ telemetry {
   publish_allocation_metrics = true
   publish_node_metrics = true
 }
+
+plugin "docker" {
+  config {
+    allow_privileged = true
+    volumes {
+      enabled = true
+    }
+  }
+}

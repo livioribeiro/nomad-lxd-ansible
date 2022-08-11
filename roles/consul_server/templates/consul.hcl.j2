@@ -4,10 +4,10 @@ server = true
 advertise_addr = "{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
 client_addr = "127.0.0.1 {{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
 
-{% if ansible_hostname == 'consul1' -%}
+{% if ansible_hostname == consul_primary -%}
 bootstrap_expect = 3
 {% else -%}
-retry_join = [ "consul1" ]
+retry_join = [ "{{ consul_primary }}" ]
 {% endif %}
 
 ui_config {
@@ -33,7 +33,7 @@ config_entries {
       Kind = "proxy-defaults"
       Name = "global"
       Config {
-        envoy_prometheus_bind_addr = "0.0.0.0:9999"
+        envoy_prometheus_bind_addr = "0.0.0.0:9102"
       }
     }
   ]

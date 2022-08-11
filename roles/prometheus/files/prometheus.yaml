@@ -4,7 +4,7 @@ global:
 
 scrape_configs:
 
-  - job_name: 'nomad_metrics'
+  - job_name: nomad_metrics
 
     consul_sd_configs:
     - server: '127.0.0.1:8500'
@@ -31,10 +31,10 @@ scrape_configs:
     params:
       format: ['prometheus']
 
-  - job_name: consul-connect-envoy
+  - job_name: consul_connect_envoy_metrics
     
     consul_sd_configs:
-      - {}
+      - server: '127.0.0.1:8500'
 
     relabel_configs:
     - source_labels: [__meta_consul_service]

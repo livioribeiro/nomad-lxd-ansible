@@ -33,6 +33,10 @@
     state: present
     update_cache: yes
 
+- name: make / shared
+  become: yes
+  command: mount --make-shared /
+
 - name: add docker apt key
   apt_key:
     url: "{{ docker_gpg_url }}"
@@ -51,7 +55,7 @@
 
 # - name: install openjdk
 #   apt:
-#     name: openjdk-11-jdk-headless
+#     name: openjdk-17-jdk-headless
 #     state: present
 
 - name: create cni plugins directory

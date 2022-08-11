@@ -1,6 +1,8 @@
 [all:vars]
 
 ubuntu_version = jammy
+consul_primary = consul1
+
 traefik_version = 2.8.1
 traefik_archive = traefik_v{{ traefik_version }}_linux_amd64
 prometheus_version = 2.37.0
