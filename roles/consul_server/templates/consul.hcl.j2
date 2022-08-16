@@ -1,8 +1,7 @@
-data_dir = "/var/consul"
-
-server = true
+data_dir       = "/var/consul"
+server         = true
 advertise_addr = "{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
-client_addr = "127.0.0.1 {{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
+client_addr    = "127.0.0.1 {{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
 
 {% if ansible_hostname == consul_primary -%}
 bootstrap_expect = 3
@@ -11,7 +10,7 @@ retry_join = [ "{{ consul_primary }}" ]
 {% endif %}
 
 ui_config {
-  enabled = true
+  enabled          = true
   metrics_provider = "prometheus"
   metrics_proxy {
     base_url = "http://prometheus:9090"
@@ -24,7 +23,7 @@ connect {
 
 telemetry {
   prometheus_retention_time = "10s"
-  disable_hostname = true
+  disable_hostname          = true
 }
 
 config_entries {

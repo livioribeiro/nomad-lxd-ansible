@@ -1,0 +1,26 @@
+---
+- name: install nfs server
+  apt:
+    name: nfs-kernel-server
+    state: present
+    update_cache: yes
+
+- name: create exports directory
+  file:
+    path: /srv/nomad
+    state: directory
+
+- name: copy nfs config
+  copy:
+    src: exports
+    dest: /etc/exports
+
+- name: apply exports
+  become: yes
+  command: exportfs -a
+
+- name: start nfs server
+  service:
+    name: nfs-server
+    state: started
+    enabled: yes

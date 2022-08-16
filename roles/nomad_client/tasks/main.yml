@@ -79,3 +79,4 @@
   service:
     name: nomad
     state: restarted
+    enabled: yes

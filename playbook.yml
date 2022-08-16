@@ -17,9 +17,9 @@
         config:
           # nomad clients need some privileges to be able to run docker containers
           security.nesting: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
-          security.privileged: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
-          # security.syscalls.intercept.mknod: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
-          # security.syscalls.intercept.setxattr: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
+          security.privileged: "{{ 'true' if item in groups['privileged'] else 'false' }}"
+          raw.lxc: "{{ nomad_client_raw_lxc if item in groups['nomad_clients'] else '' }}"
+          raw.apparmor: "{{ nfs_server_raw_apparmor if item == 'nfs-server' else '' }}"
 
     - name: add port maps
       community.general.lxd_container:
@@ -38,7 +38,7 @@
   roles:
     - consul_server
 
-# - hosts: vault_servers
+# - hosts: vault-servers
 #   roles:
 #     - consul_client
 #     - vault_server
@@ -52,6 +52,10 @@
   roles:
     - consul_client
     - nomad_client
+
+- hosts: nfs-server
+  roles:
+    - nfs_server
 
 - hosts: prometheus
   roles:
