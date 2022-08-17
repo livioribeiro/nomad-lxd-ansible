@@ -38,7 +38,16 @@
   roles:
     - consul_server
 
-# - hosts: vault-servers
+- hosts: proxy
+  roles:
+    - consul_client
+    - proxy
+
+- hosts: nfs-server
+  roles:
+    - nfs_server
+
+# - hosts: vault_servers
 #   roles:
 #     - consul_client
 #     - vault_server
@@ -53,16 +62,6 @@
     - consul_client
     - nomad_client
 
-- hosts: nfs-server
+- hosts: nomad-server1
   roles:
-    - nfs_server
-
-- hosts: prometheus
-  roles:
-    - consul_client
-    - prometheus
-
-- hosts: proxy
-  roles:
-    - consul_client
-    - proxy
+    - nomad_jobs

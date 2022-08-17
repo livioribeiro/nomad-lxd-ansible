@@ -6,8 +6,10 @@
   copy:
     src: consul.hcl
     dest: /etc/consul.d/consul.hcl
+  register: consul_config
 
 - name: restart consul
+  when: consul_config.changed
   service:
     name: consul
     state: restarted

@@ -1,0 +1,45 @@
+---
+- name: create namespaces
+  loop:
+    - system-storage
+    - system-monitoring
+  command: "nomad namespace apply {{ item }}"
+
+- name: create jobs dir
+  file:
+    path: /opt/nomad-jobs
+    state: directory
+
+- name: copy nfs csi plugin jobs
+  copy:
+    src: csi_plugins/rocketduck-nfs
+    dest: /opt/nomad-jobs/
+  register: nfs_plugin_jobs
+
+- name: run nfs csi plugin
+  when: nfs_plugin_jobs and nfs_plugin_jobs.changed
+  loop:
+    - controller.nomad
+    - node.nomad
+  command: "nomad job run --namespace system-storage /opt/nomad-jobs/rocketduck-nfs/{{ item }}"
+
+- name: copy prometheus job
+  copy:
+    src: prometheus.nomad
+    dest: /opt/nomad-jobs/prometheus.nomad
+  register: prometheus_job
+
+- name: run prometheus job
+  when: prometheus_job and prometheus_job.changed
+  command: nomad job run --namespace system-monitoring /opt/nomad-jobs/prometheus.nomad
+
+# - name: copy portworx csi plugin files
+#   when: ansible_hostname == nomad_server_primary
+#   copy:
+#     src: "csi_plugins/portworx/portworx.nomad"
+#     dest: "/tmp/portworx.nomad"
+#   register: portworx_plugin_files
+
+# - name: install portworx csi plugin
+#   when: portworx_plugin_files.changed
+#   command: "nomad job run /tmp/portworx.nomad"

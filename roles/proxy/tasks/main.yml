@@ -22,6 +22,7 @@
   copy:
     src: traefik.toml
     dest: /etc/traefik/traefik.toml
+  register: traefik_config
 
 - name: create traefik file provider directory
   file:
@@ -35,8 +36,10 @@
   copy:
     src: "{{ item }}.toml"
     dest: /etc/traefik/conf/{{ item }}.toml
+  register: traefik_provider_config
 
 - name: start traefik
+  when: traefik_config.changed or traefik_provider_config.changed
   service:
     name: traefik
     state: restarted

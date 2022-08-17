@@ -2,6 +2,7 @@ all:
   vars:
     ubuntu_version: jammy
     consul_primary: consul1
+    nomad_server_primary: nomad-server1
 
     traefik_version: 2.8.1
     traefik_archive: traefik_v{{ traefik_version }}_linux_amd64

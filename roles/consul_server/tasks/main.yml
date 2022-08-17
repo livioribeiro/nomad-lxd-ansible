@@ -1,13 +1,15 @@
 ---
 - import_role:
-    name: consul_service
+    name: "consul_service"
 
 - name: copy consul config
   template:
     src: consul.hcl.j2
     dest: /etc/consul.d/consul.hcl
+  register: consul_config
 
 - name: restart consul
+  when: consul_config.changed
   service:
     name: consul
     state: restarted
