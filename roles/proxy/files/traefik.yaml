@@ -1,0 +1,14 @@
+accessLog:
+  filePath: /var/log/traefik/access.log
+
+api:
+  dashboard: true
+  insecure: true
+  debug: true
+
+providers:
+  file:
+    directory: /etc/traefik/conf/
+  consulCatalog:
+    exposedByDefault: false
+    defaultRule: "Host(`{{ .Name }}.service.localhost`)"

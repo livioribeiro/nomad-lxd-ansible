@@ -6,7 +6,7 @@ client_addr    = "127.0.0.1 {{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
 {% if ansible_hostname == consul_primary -%}
 bootstrap_expect = 3
 {% else -%}
-retry_join = [ "{{ consul_primary }}" ]
+retry_join = [ "{{ consul_primary }}.lxd" ]
 {% endif %}
 
 ui_config {

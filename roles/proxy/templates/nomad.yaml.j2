@@ -1,0 +1,24 @@
+http:
+  routers:
+    consul:
+      service: consul
+      rule: "Host(`consul.localhost`)"
+
+    nomad:
+      service: nomad
+      rule: "Host(`nomad.localhost`)"
+
+  services:
+    consul:
+      loadBalancer:
+        servers:
+          {% for name in groups['consul_servers'] -%}
+          - url: http://{{ name }}:8500
+          {% endfor %}
+
+    nomad:
+      loadBalancer:
+        servers:
+          {% for name in groups['nomad_servers'] -%}
+          - url: http://{{ name }}:4646
+          {% endfor %}

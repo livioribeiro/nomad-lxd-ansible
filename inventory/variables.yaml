@@ -8,10 +8,6 @@ all:
     traefik_archive: traefik_v{{ traefik_version }}_linux_amd64
     traefik_url: https://github.com/traefik/traefik/releases/download/v{{ traefik_version }}/{{ traefik_archive }}.tar.gz
 
-    prometheus_version: 2.37.0
-    prometheus_archive: prometheus-{{ prometheus_version }}.linux-amd64
-    prometheus_url: https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/{{ prometheus_archive }}.tar.gz
-
     cni_plugins_version: 1.1.1
     cni_plugins_archive: cni-plugins-linux-amd64-v{{ cni_plugins_version }}
     cni_plugins_url: https://github.com/containernetworking/plugins/releases/download/v{{ cni_plugins_version }}/{{ cni_plugins_archive }}.tgz
@@ -24,10 +20,3 @@ all:
 
     docker_gpg_url: https://download.docker.com/linux/ubuntu/gpg
     docker_repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ubuntu_version }} stable
-
-    nomad_client_raw_lxc: |-
-      lxc.apparmor.profile=unconfined
-      lxc.cgroup.devices.allow=a
-      lxc.cap.drop=
-
-    nfs_server_raw_apparmor: mount fstype=rpc_pipefs, mount fstype=nfsd,

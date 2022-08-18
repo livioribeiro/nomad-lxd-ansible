@@ -1,7 +1,4 @@
 ---
-- import_role:
-    name: hashicorp_apt
-
 - name: install nomad
   apt:
     name: nomad

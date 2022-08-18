@@ -3,8 +3,8 @@
     name: consul_service
 
 - name: copy consul config
-  copy:
-    src: consul.hcl
+  template:
+    src: consul.hcl.j2
     dest: /etc/consul.d/consul.hcl
   register: consul_config
 
@@ -14,3 +14,6 @@
     name: consul
     state: restarted
     enabled: yes
+
+- import_role:
+    name: consul_dns

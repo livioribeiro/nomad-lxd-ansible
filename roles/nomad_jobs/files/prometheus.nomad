@@ -102,7 +102,7 @@ scrape_configs:
       regex: (.+)
     - source_labels: [__address__, __meta_consul_service_metadata_envoy_metrics_port]
       regex: ([^:]+)(?::\d+)?;(\d+)
-      replacement: ${1}:${2}
+      replacement: $${1}:$${2}
       target_label: __address__
 EOF
       }

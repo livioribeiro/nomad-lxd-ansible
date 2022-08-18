@@ -3,7 +3,7 @@ Description="Traefik Proxy"
 Documentation=https://traefik.io
 Requires=network-online.target
 After=network-online.target
-ConditionFileNotEmpty=/etc/traefik/traefik.toml
+ConditionFileNotEmpty=/etc/traefik/traefik.yaml
 
 [Service]
 Restart=on-failure

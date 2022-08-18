@@ -28,8 +28,8 @@ job "storage-node" {
       }
 
       resources {
-        cpu    = 500
-        memory = 200
+        cpu    = 200
+        memory = 100
       }
 
     }

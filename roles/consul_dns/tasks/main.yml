@@ -1,0 +1,17 @@
+---
+- name: create resolved directory
+  file:
+    path: /etc/systemd/resolved.conf.d
+    state: directory
+
+- name: copy resolved config
+  copy:
+    src: resolved.conf
+    dest: /etc/systemd/resolved.conf.d/consul.conf
+  register: resolved_config
+
+- name: restart resolved
+  when: resolved_config.changed
+  service:
+    name: systemd-resolved
+    state: restarted

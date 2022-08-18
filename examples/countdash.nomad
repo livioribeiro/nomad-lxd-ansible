@@ -26,6 +26,12 @@ job "countdash" {
             }
           }
         }
+        sidecar_task {
+          resources {
+            cpu    = 50
+            memory = 30
+          }
+        }
       }
     }
 
@@ -38,6 +44,11 @@ job "countdash" {
 
       env {
         PORT = "${NOMAD_PORT_http}"
+      }
+
+      resources {
+        cpu    = 50
+        memory = 30
       }
     }
   }
@@ -64,6 +75,12 @@ job "countdash" {
           }
           tags = ["traefik.enable=false"]
         }
+        sidecar_task {
+          resources {
+            cpu    = 50
+            memory = 30
+          }
+        }
       }
     }
 
@@ -77,6 +94,11 @@ job "countdash" {
       env {
         PORT = "${NOMAD_PORT_http}"
         COUNTING_SERVICE_URL = "http://${NOMAD_UPSTREAM_ADDR_count_api}"
+      }
+
+      resources {
+        cpu    = 50
+        memory = 30
       }
     }
   }

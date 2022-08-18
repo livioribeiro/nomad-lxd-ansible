@@ -36,6 +36,11 @@ job "hello-world" {
         # tell traefik to expose this service
         tags = ["traefik.enable=true"]
       }
+
+      resources {
+        cpu    = 50
+        memory = 30
+      }
     }
   }
 }

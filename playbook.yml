@@ -3,27 +3,48 @@
   # run this task in the host
   connection: local
   tasks:
-    - name: create containers
-      loop: "{{ groups['all'] }}"
+    - name: create server containers
+      loop: "{{ groups['consul_servers'] + groups['nomad_servers'] }}"
       community.general.lxd_container:
         name: "{{ item }}"
         state: started
-        source:
+        source: &container_image_source
           type: image
           mode: pull
           server: https://images.linuxcontainers.org
           protocol: simplestreams
           alias: "ubuntu/{{ ubuntu_version }}/amd64"
-        config:
-          # nomad clients need some privileges to be able to run docker containers
-          security.nesting: "{{ 'true' if item in groups['nomad_clients'] else 'false' }}"
-          security.privileged: "{{ 'true' if item in groups['privileged'] else 'false' }}"
-          raw.lxc: "{{ nomad_client_raw_lxc if item in groups['nomad_clients'] else '' }}"
-          raw.apparmor: "{{ nfs_server_raw_apparmor if item == 'nfs-server' else '' }}"
 
-    - name: add port maps
+    - name: create nomad client containers
+      loop: "{{ groups['nomad_clients'] }}"
+      community.general.lxd_container:
+        name: "{{ item }}"
+        state: started
+        source: *container_image_source
+        config:
+          limits.cpu: "1"
+          limits.memory: 3GB
+          security.nesting: "true"
+          security.privileged: "true"
+          raw.lxc: |-
+            lxc.apparmor.profile=unconfined
+            lxc.cgroup.devices.allow=a
+            lxc.cap.drop=
+
+    - name: create nfs server container
+      community.general.lxd_container:
+        name: nfs-server
+        state: started
+        source: *container_image_source
+        config:
+          security.privileged: "true"
+          raw.apparmor: "mount fstype=rpc_pipefs, mount fstype=nfsd,"
+
+    - name: create proxy container
       community.general.lxd_container:
         name: proxy
+        state: started
+        source: *container_image_source
         devices:
           map_port_80:
             type: proxy
@@ -36,10 +57,12 @@
 
 - hosts: consul_servers
   roles:
+    - hashicorp_apt
     - consul_server
 
 - hosts: proxy
   roles:
+    - hashicorp_apt
     - consul_client
     - proxy
 
@@ -54,11 +77,13 @@
 
 - hosts: nomad_servers
   roles:
+    - hashicorp_apt
     - consul_client
     - nomad_server
 
 - hosts: nomad_clients
   roles:
+    - hashicorp_apt
     - consul_client
     - nomad_client
 

@@ -20,8 +20,8 @@
 
 - name: copy traefik config
   copy:
-    src: traefik.toml
-    dest: /etc/traefik/traefik.toml
+    src: traefik.yaml
+    dest: /etc/traefik/traefik.yaml
   register: traefik_config
 
 - name: create traefik file provider directory
@@ -30,12 +30,9 @@
     state: directory
 
 - name: copy traefik file provider config
-  loop:
-    - nomad
-    - prometheus
-  copy:
-    src: "{{ item }}.toml"
-    dest: /etc/traefik/conf/{{ item }}.toml
+  template:
+    src: nomad.yaml.j2
+    dest: /etc/traefik/conf/nomad.yaml
   register: traefik_provider_config
 
 - name: start traefik

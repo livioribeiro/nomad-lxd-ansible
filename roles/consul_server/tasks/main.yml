@@ -1,6 +1,6 @@
 ---
 - import_role:
-    name: "consul_service"
+    name: consul_service
 
 - name: copy consul config
   template:
@@ -14,3 +14,6 @@
     name: consul
     state: restarted
     enabled: yes
+
+- import_role:
+    name: consul_dns
