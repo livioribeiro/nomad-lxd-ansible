@@ -82,6 +82,17 @@ scrape_configs:
     params:
       format: ['prometheus']
 
+  - job_name: nomad_autoscaler
+
+    consul_sd_configs:
+    - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
+      services: ['autoscaler']
+
+    scrape_interval: 5s
+    metrics_path: /v1/metrics
+    params:
+      format: ['prometheus']
+
   - job_name: consul_metrics
 
     consul_sd_configs:

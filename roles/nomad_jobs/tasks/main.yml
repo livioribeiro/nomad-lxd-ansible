@@ -10,13 +10,23 @@
     path: /opt/nomad-jobs
     state: directory
 
+- name: copy autoscaler job
+  copy:
+    src: autoscaler.nomad
+    dest: /opt/nomad-jobs/
+  register: autoscaler_job
+
+- name: run autoscaler job
+  when: autoscaler_job.changed
+  command: nomad job run /opt/nomad-jobs/autoscaler.nomad
+
 - name: copy nfs csi plugin jobs
   copy:
     src: csi_plugins/rocketduck-nfs
     dest: /opt/nomad-jobs/
   register: nfs_plugin_jobs
 
-- name: run nfs csi plugin
+- name: run nfs csi plugin jobs
   when: nfs_plugin_jobs and nfs_plugin_jobs.changed
   loop:
     - controller.nomad
@@ -26,7 +36,7 @@
 - name: copy prometheus job
   copy:
     src: prometheus.nomad
-    dest: /opt/nomad-jobs/prometheus.nomad
+    dest: /opt/nomad-jobs/
   register: prometheus_job
 
 - name: run prometheus job
