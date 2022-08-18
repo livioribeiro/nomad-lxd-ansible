@@ -2,11 +2,11 @@ http:
   routers:
     consul:
       service: consul
-      rule: "Host(`consul.localhost`)"
+      rule: "Host(`consul.{{ proxy_route_suffix }}`)"
 
     nomad:
       service: nomad
-      rule: "Host(`nomad.localhost`)"
+      rule: "Host(`nomad.{{ proxy_route_suffix }}`)"
 
   services:
     consul:

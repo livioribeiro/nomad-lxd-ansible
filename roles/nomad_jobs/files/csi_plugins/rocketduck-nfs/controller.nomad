@@ -1,6 +1,7 @@
 job "storage-controller" {
   datacenters = ["dc1"]
   type        = "service"
+  namespace   = "system-storage"
 
   group "controller" {
     task "controller" {

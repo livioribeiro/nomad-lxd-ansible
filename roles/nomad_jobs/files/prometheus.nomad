@@ -1,6 +1,7 @@
 job "prometheus" {
   datacenters = ["dc1"]
   type        = "service"
+  namespace   = "system-monitoring"
 
   group "monitoring" {
     count = 1
@@ -55,6 +56,10 @@ job "prometheus" {
 
         data = <<EOF
 ---
+# Source:
+# https://learn.hashicorp.com/tutorials/nomad/prometheus-metrics
+# https://www.mattmoriarity.com/2021-02-21-scraping-prometheus-metrics-with-nomad-and-consul-connect/
+
 global:
   scrape_interval:     5s
   evaluation_interval: 5s
@@ -77,7 +82,7 @@ scrape_configs:
     params:
       format: ['prometheus']
 
-  - job_name: 'consul_metrics'
+  - job_name: consul_metrics
 
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus" }}:8500'

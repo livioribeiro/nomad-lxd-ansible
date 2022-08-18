@@ -1,6 +1,7 @@
 job "storage-node" {
   datacenters = ["dc1"]
   type        = "system"
+  namespace   = "system-storage"
 
   group "node" {
     task "node" {

@@ -11,4 +11,4 @@ providers:
     directory: /etc/traefik/conf/
   consulCatalog:
     exposedByDefault: false
-    defaultRule: "Host(`{{ .Name }}.service.localhost`)"
+    defaultRule: "Host(`{{ '{{' }} .Name {{ '}}' }}.service.{{ proxy_route_suffix }}`)"

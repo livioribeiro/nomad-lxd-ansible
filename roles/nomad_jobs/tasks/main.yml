@@ -21,7 +21,7 @@
   loop:
     - controller.nomad
     - node.nomad
-  command: "nomad job run --namespace system-storage /opt/nomad-jobs/rocketduck-nfs/{{ item }}"
+  command: "nomad job run /opt/nomad-jobs/rocketduck-nfs/{{ item }}"
 
 - name: copy prometheus job
   copy:
@@ -31,7 +31,7 @@
 
 - name: run prometheus job
   when: prometheus_job and prometheus_job.changed
-  command: nomad job run --namespace system-monitoring /opt/nomad-jobs/prometheus.nomad
+  command: nomad job run /opt/nomad-jobs/prometheus.nomad
 
 # - name: copy portworx csi plugin files
 #   when: ansible_hostname == nomad_server_primary

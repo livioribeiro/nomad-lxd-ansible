@@ -1,7 +1,8 @@
 job "portworx" {
-  type        = "service"
   datacenters = ["dc1"]
-  
+  type        = "service"
+  namespace   = "system-storage"
+
   group "portworx" {
     count = 3
 
@@ -89,8 +90,8 @@ job "portworx" {
 
       # resource config
       resources {
-        cpu    = 500
-        memory = 500
+        cpu    = 512
+        memory = 512
       }
 
     }

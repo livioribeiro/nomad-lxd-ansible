@@ -19,8 +19,8 @@
     state: directory
 
 - name: copy traefik config
-  copy:
-    src: traefik.yaml
+  template:
+    src: traefik.yaml.j2
     dest: /etc/traefik/traefik.yaml
   register: traefik_config
 

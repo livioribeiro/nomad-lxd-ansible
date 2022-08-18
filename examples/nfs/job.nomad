@@ -1,12 +1,13 @@
-job "example" {
+job "nfs-example" {
   datacenters = ["dc1"]
   type        = "service"
 
   group "example" {
+    count = 3
 
     volume "example" {
       type            = "csi"
-      source          = "example"
+      source          = "nfs-example"
       read_only       = false
       attachment_mode = "file-system"
       access_mode     = "multi-node-multi-writer"
@@ -22,7 +23,6 @@ job "example" {
           "sleep",
           "infinity",
         ]
-
       }
 
       volume_mount {
@@ -31,8 +31,8 @@ job "example" {
       }
 
       resources {
-        cpu    = 100
-        memory = 50
+        cpu    = 50
+        memory = 30
       }
     }
   }
