@@ -6,9 +6,13 @@ api:
   insecure: true
   debug: true
 
+metrics:
+  prometheus: {}
+
 providers:
   file:
     directory: /etc/traefik/conf/
   consulCatalog:
     exposedByDefault: false
     defaultRule: "Host(`{{ '{{' }} .Name {{ '}}' }}.service.{{ proxy_route_suffix }}`)"
+    connectAware: true

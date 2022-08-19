@@ -2,6 +2,11 @@
 - import_role:
     name: nomad_service
 
+- name: install nfs-common
+  apt:
+    name: nfs-common
+    state: present
+
 - name: add envoy apt key
   apt_key:
     url: "{{ envoy_gpg_url }}"

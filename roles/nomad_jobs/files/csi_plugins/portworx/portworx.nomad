@@ -1,3 +1,18 @@
+variable "version" {
+  type = string
+  default = "2.11.2"
+}
+
+variable "cpu" {
+  type = number
+  default = 1024
+}
+
+variable "memory" {
+  type = number
+  default = 1024
+}
+
 job "portworx" {
   datacenters = ["dc1"]
   type        = "service"
@@ -58,7 +73,7 @@ job "portworx" {
 
       # container config
       config {
-        image        = "portworx/oci-monitor:2.11.2"
+        image        = "portworx/oci-monitor:${var.version}"
         network_mode = "host"
         ipc_mode = "host"
         privileged = true
@@ -90,8 +105,8 @@ job "portworx" {
 
       # resource config
       resources {
-        cpu    = 512
-        memory = 512
+        cpu    = var.cpu
+        memory = var.memory
       }
 
     }

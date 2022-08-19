@@ -1,7 +1,12 @@
+variable "version" {
+  type = string
+  default = "0.3.7"
+}
+
 job "autoscaler" {
   type = "service"
-
   datacenters = ["dc1"]
+  namespace = "system-autoscaling"
 
   group "autoscaler" {
     count = 1
@@ -14,7 +19,7 @@ job "autoscaler" {
       driver = "docker"
 
       config {
-        image   = "hashicorp/nomad-autoscaler:0.3.3"
+        image   = "hashicorp/nomad-autoscaler:${var.version}"
         command = "nomad-autoscaler"
         ports   = ["http"]
 
@@ -38,7 +43,7 @@ job "autoscaler" {
       # }
       #
       # artifact {
-      #   source      = "https://releases.hashicorp.com/nomad-autoscaler/0.3.2/nomad-autoscaler_0.3.2_linux_amd64.zip"
+      #   source      = "https://releases.hashicorp.com/nomad-autoscaler/${var.version}/nomad-autoscaler_${var.version}_linux_amd64.zip"
       #   destination = "/usr/local/bin"
       # }
 

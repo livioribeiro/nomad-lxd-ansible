@@ -73,7 +73,6 @@ job "countdash" {
               local_bind_port = 8080
             }
           }
-          tags = ["traefik.enable=false"]
         }
         sidecar_task {
           resources {

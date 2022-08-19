@@ -1,3 +1,8 @@
+variable "version" {
+  type = string
+  default = "0.4.0"
+}
+
 job "storage-controller" {
   datacenters = ["dc1"]
   type        = "service"
@@ -8,7 +13,7 @@ job "storage-controller" {
       driver = "docker"
 
       config {
-        image = "registry.gitlab.com/rocketduck/csi-plugin-nfs:0.4.0"
+        image = "registry.gitlab.com/rocketduck/csi-plugin-nfs:${var.version}"
 
         args = [
           "--type=controller",

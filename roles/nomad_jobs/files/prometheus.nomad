@@ -1,3 +1,8 @@
+variable "version" {
+  type = string
+  default = "v2.38.0"
+}
+
 job "prometheus" {
   datacenters = ["dc1"]
   type        = "service"
@@ -27,7 +32,7 @@ job "prometheus" {
       driver = "docker"
 
       config {
-        image = "prom/prometheus:v2.38.0"
+        image = "prom/prometheus:${var.version}"
 
         volumes = [
           "local/prometheus.yml:/etc/prometheus/prometheus.yml",
@@ -55,10 +60,10 @@ job "prometheus" {
         destination = "local/prometheus.yml"
 
         data = <<EOF
----
 # Source:
 # https://learn.hashicorp.com/tutorials/nomad/prometheus-metrics
 # https://www.mattmoriarity.com/2021-02-21-scraping-prometheus-metrics-with-nomad-and-consul-connect/
+---
 
 global:
   scrape_interval:     5s
@@ -70,7 +75,7 @@ scrape_configs:
 
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
-      services: ['nomad-client', 'nomad']
+      services: [nomad-client, nomad]
 
     relabel_configs:
     - source_labels: ['__meta_consul_tags']
@@ -80,18 +85,23 @@ scrape_configs:
     scrape_interval: 5s
     metrics_path: /v1/metrics
     params:
-      format: ['prometheus']
+      format: [prometheus]
+
+  - job_name: proxy_metrics
+
+    static_configs:
+      - targets: [proxy:8080]
 
   - job_name: nomad_autoscaler
 
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
-      services: ['autoscaler']
+      services: [autoscaler]
 
     scrape_interval: 5s
     metrics_path: /v1/metrics
     params:
-      format: ['prometheus']
+      format: [prometheus]
 
   - job_name: consul_metrics
 
@@ -102,7 +112,7 @@ scrape_configs:
     scrape_interval: 5s
     metrics_path: /v1/agent/metrics
     params:
-      format: ['prometheus']
+      format: [prometheus]
 
   - job_name: consul_connect_envoy_metrics
     
