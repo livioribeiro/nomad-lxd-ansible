@@ -1,6 +1,4 @@
 ---
-- import_role:
-    name: nomad_service
 
 - name: copy nomad config
   copy:

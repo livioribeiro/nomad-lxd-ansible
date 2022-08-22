@@ -1,5 +1,5 @@
 id        = "nfs-example" # ID as seen in nomad
-name      = "Nfs Example" # Display name
+name      = "nfs-example" # Display name
 type      = "csi"
 plugin_id = "nfs" # Needs to match the deployed plugin
 

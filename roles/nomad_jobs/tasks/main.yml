@@ -23,7 +23,7 @@
 
 - name: copy nfs csi plugin jobs
   copy:
-    src: csi_plugins/rocketduck-nfs
+    src: rocketduck-nfs
     dest: /opt/nomad-jobs/
   register: nfs_plugin_jobs
 
@@ -43,14 +43,3 @@
 - name: run prometheus job
   when: prometheus_job and prometheus_job.changed
   command: nomad job run -namespace system-monitoring /opt/nomad-jobs/prometheus.nomad
-
-# - name: copy portworx csi plugin files
-#   when: ansible_hostname == nomad_server_primary
-#   copy:
-#     src: "csi_plugins/portworx/portworx.nomad"
-#     dest: "/tmp/portworx.nomad"
-#   register: portworx_plugin_files
-
-# - name: install portworx csi plugin
-#   when: portworx_plugin_files.changed
-#   command: "nomad job run -namespace system-storage /tmp/portworx.nomad"

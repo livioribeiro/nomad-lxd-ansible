@@ -1,5 +1,6 @@
 ---
-- hosts: localhost
+- name: servers deployment
+  hosts: localhost
   # run this task in the host
   connection: local
   tasks:
@@ -55,38 +56,55 @@
             listen: tcp:0.0.0.0:8080
             connect: tcp:127.0.0.1:8080
 
-- hosts: consul_servers
+- name: install consul service
+  hosts: consul_servers:nomad_servers:nomad_clients:proxy
   roles:
     - hashicorp_apt
-    - consul_server
+    - consul_service
 
-- hosts: proxy
+- name: setup consul servers
+  hosts: consul_servers
   roles:
-    - hashicorp_apt
+    - consul_server
+    - consul_dns
+
+- name: setup consul clients
+  hosts: nomad_servers:nomad_clients:proxy
+  roles:
     - consul_client
+
+- name: setup proxy
+  hosts: proxy
+  roles:
     - proxy
 
-- hosts: nfs-server
+# - name: setup vault
+#   hosts: vault_servers
+#   roles:
+#     - vault_server
+
+- name: setup nfs server
+  hosts: nfs-server
   roles:
     - nfs_server
 
-# - hosts: vault_servers
-#   roles:
-#     - consul_client
-#     - vault_server
-
-- hosts: nomad_servers
+- name: install nomad service
+  hosts: nomad_servers:nomad_clients
   roles:
-    - hashicorp_apt
-    - consul_client
+    - nomad_service
+
+- name: setup nomad server
+  hosts: nomad_servers
+  roles:
     - nomad_server
 
-- hosts: nomad_clients
+- name: setup nomad client
+  hosts: nomad_clients
   roles:
-    - hashicorp_apt
-    - consul_client
     - nomad_client
+    - consul_dns
 
-- hosts: nomad-server1
+- name: run nomad jobs
+  hosts: nomad-server1
   roles:
     - nomad_jobs

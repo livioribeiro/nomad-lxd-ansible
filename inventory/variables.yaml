@@ -1,7 +1,7 @@
 all:
   vars:
     ubuntu_version: jammy
-    consul_primary: consul1
+    consul_server_primary: consul-server1
     nomad_server_primary: nomad-server1
     proxy_route_suffix: localhost
 

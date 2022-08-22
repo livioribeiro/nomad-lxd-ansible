@@ -8,7 +8,7 @@ all:
   children:
     consul_servers:
       hosts:
-        consul[1:3]:
+        consul-server[1:3]:
     # vault_servers:
     #   hosts:
     #     vault1:

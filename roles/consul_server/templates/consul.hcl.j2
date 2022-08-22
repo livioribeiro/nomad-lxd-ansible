@@ -3,10 +3,10 @@ server         = true
 advertise_addr = "{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
 client_addr    = "127.0.0.1 {{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
 
-{% if ansible_hostname == consul_primary -%}
+{% if ansible_hostname == consul_server_primary -%}
 bootstrap_expect = 3
 {% else -%}
-retry_join = [ "{{ consul_primary }}.lxd" ]
+retry_join = [ "{{ consul_server_primary }}.lxd" ]
 {% endif %}
 
 ui_config {
@@ -26,12 +26,14 @@ telemetry {
   disable_hostname          = true
 }
 
+# default configuration for envoy sidecar proxy
 config_entries {
   bootstrap = [
     {
       Kind = "proxy-defaults"
       Name = "global"
       Config {
+        # envoy listens by default on port 9102 for prometheus metrics
         envoy_prometheus_bind_addr = "0.0.0.0:9102"
       }
     }
