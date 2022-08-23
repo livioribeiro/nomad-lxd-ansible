@@ -4,7 +4,6 @@ all:
     ansible_python_interpreter: /usr/bin/python3
   hosts:
     nfs-server:
-    proxy:
   children:
     consul_servers:
       hosts:
@@ -16,5 +15,14 @@ all:
       hosts:
         nomad-server[1:3]:
     nomad_clients:
-      hosts:
-        nomad-client[1:3]:
+      children:
+        nomad_apps_clients:
+          hosts:
+            nomad-apps-client[1:3]:
+          vars:
+            datacenter: apps
+        nomad_infra_clients:
+          hosts:
+            nomad-infra-client1:
+          vars:
+            datacenter: infra

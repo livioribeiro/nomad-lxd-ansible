@@ -1,5 +1,5 @@
 job "countdash" {
-  datacenters = ["dc1"]
+  datacenters = ["apps"]
 
   group "api" {
     network {
@@ -73,6 +73,7 @@ job "countdash" {
               local_bind_port = 8080
             }
           }
+          tags = ["traefik.enable=false"]
         }
         sidecar_task {
           resources {

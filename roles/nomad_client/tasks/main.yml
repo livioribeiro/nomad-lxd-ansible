@@ -59,8 +59,8 @@
     mode: 0755
 
 - name: copy nomad config
-  copy:
-    src: nomad.hcl
+  template:
+    src: nomad.hcl.j2
     dest: /etc/nomad.d/nomad.hcl
   register: nomad_config
 

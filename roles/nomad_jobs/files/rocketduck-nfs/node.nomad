@@ -4,7 +4,7 @@ variable "version" {
 }
 
 job "storage-node" {
-  datacenters = ["dc1"]
+  datacenters = ["apps", "infra"]
   type        = "system"
   namespace   = "system-storage"
 

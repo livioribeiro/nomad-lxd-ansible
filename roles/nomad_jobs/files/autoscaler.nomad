@@ -5,7 +5,7 @@ variable "version" {
 
 job "autoscaler" {
   type = "service"
-  datacenters = ["dc1"]
+  datacenters = ["infra"]
   namespace = "system-autoscaling"
 
   group "autoscaler" {

@@ -4,7 +4,7 @@ variable "version" {
 }
 
 job "storage-controller" {
-  datacenters = ["dc1"]
+  datacenters = ["infra"]
   type        = "service"
   namespace   = "system-storage"
 

@@ -24,7 +24,7 @@
         source: *container_image_source
         config:
           limits.cpu: "1"
-          limits.memory: 3GB
+          limits.memory: 2GB
           security.nesting: "true"
           security.privileged: "true"
           raw.lxc: |-
@@ -32,20 +32,9 @@
             lxc.cgroup.devices.allow=a
             lxc.cap.drop=
 
-    - name: create nfs server container
+    - name: create nomad client infra containers
       community.general.lxd_container:
-        name: nfs-server
-        state: started
-        source: *container_image_source
-        config:
-          security.privileged: "true"
-          raw.apparmor: "mount fstype=rpc_pipefs, mount fstype=nfsd,"
-
-    - name: create proxy container
-      community.general.lxd_container:
-        name: proxy
-        state: started
-        source: *container_image_source
+        name: nomad-infra-client1
         devices:
           map_port_80:
             type: proxy
@@ -56,8 +45,17 @@
             listen: tcp:0.0.0.0:8080
             connect: tcp:127.0.0.1:8080
 
+    - name: create nfs server container
+      community.general.lxd_container:
+        name: nfs-server
+        state: started
+        source: *container_image_source
+        config:
+          security.privileged: "true"
+          raw.apparmor: "mount fstype=rpc_pipefs, mount fstype=nfsd,"
+
 - name: install consul service
-  hosts: consul_servers:nomad_servers:nomad_clients:proxy
+  hosts: consul_servers:nomad_servers:nomad_clients
   roles:
     - hashicorp_apt
     - consul_service
@@ -69,14 +67,9 @@
     - consul_dns
 
 - name: setup consul clients
-  hosts: nomad_servers:nomad_clients:proxy
+  hosts: nomad_servers:nomad_clients
   roles:
     - consul_client
-
-- name: setup proxy
-  hosts: proxy
-  roles:
-    - proxy
 
 # - name: setup vault
 #   hosts: vault_servers

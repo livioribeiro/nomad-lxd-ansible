@@ -1,5 +1,5 @@
 job "nfs-example" {
-  datacenters = ["dc1"]
+  datacenters = ["apps"]
   type        = "service"
 
   group "example" {

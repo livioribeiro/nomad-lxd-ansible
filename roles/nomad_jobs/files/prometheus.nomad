@@ -4,7 +4,7 @@ variable "version" {
 }
 
 job "prometheus" {
-  datacenters = ["dc1"]
+  datacenters = ["infra"]
   type        = "service"
   namespace   = "system-monitoring"
 
@@ -89,8 +89,9 @@ scrape_configs:
 
   - job_name: proxy_metrics
 
-    static_configs:
-      - targets: [proxy:8080]
+    consul_sd_configs:
+      - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
+        services: [proxy]
 
   - job_name: nomad_autoscaler
 
@@ -107,7 +108,7 @@ scrape_configs:
 
     consul_sd_configs:
     - server: '{{ env "NOMAD_IP_prometheus" }}:8500'
-      services: ['consul']
+      services: [consul]
 
     scrape_interval: 5s
     metrics_path: /v1/agent/metrics

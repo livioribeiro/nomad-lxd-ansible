@@ -1,5 +1,5 @@
 job "hello-world" {
-  datacenters = ["dc1"]
+  datacenters = ["apps"]
 
   group "example" {
     # 3 replicas
@@ -8,6 +8,18 @@ job "hello-world" {
     network {
       # require a random port named "http"
       port "http" {}
+    }
+
+    # exposed service
+    service {
+      # service name, compose the url like 'hello-world.service.myorg.com'
+      name = "hello-world"
+      # service will bind to this port
+      port = "http"
+      # tell traefik to expose this service
+      tags = [
+        "urlprefix-/",
+      ]
     }
 
     task "server" {
@@ -25,16 +37,6 @@ job "hello-world" {
         ports = [
           "http"
         ]
-      }
-
-      # exposed service
-      service {
-        # service name, compose the url like 'hello-world.service.myorg.com'
-        name = "hello-world"
-        # service will bind to this port
-        port = "http"
-        # tell traefik to expose this service
-        tags = ["traefik.enable=true"]
       }
 
       resources {
