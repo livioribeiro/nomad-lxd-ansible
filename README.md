@@ -9,25 +9,26 @@ The cluster contains the following nodes:
 
 - 3 Consul nodes
 - 3 Nomad server nodes
-- 3 Nomad client nodes
-- 1 Traefik node
+- 4 Nomad client nodes (3 "apps" node, 1 "infra" node)
+- 1 NFS server node
 
-Consul is used to bootstrap the Nomad cluster, for service discovery
-and for the service mesh
+Consul is used to bootstrap the Nomad cluster, for service discovery and for the
+service mesh.
 
-Traefik is the entrypoint of the cluster.
-It will use Consul service catalog to expose the services.
+The client infra nodes are the entrypoint of the cluster. They will run Traefik
+and use Consul service catalog to expose the applications. The ports 80 and 8080
+will be mapped into the host for convenience.
 
-The proxy configuration exposes the services at `{{ service name }}.service.localhost`,
+The proxy configuration exposes the services at `{{ service name }}.apps.localhost`,
 so when you deploy the service [hello.nomad](hello.nomad),
-it will be exposed at `hello-world.service.localhost`
+it will be exposed at `hello-world.apps.localhost`
 
-## CSI Plugins
+## NFS and CSI Plugin
 
-There are 2 CSI plugins available: Nfs, powered by [RocketDuck csi plugin](https://gitlab.com/rocketduck/csi-plugin-nfs),
-and [PortWorx](https://docs.portworx.com/install-portworx/install-with-other/nomad/installation/install-as-a-nomad-job).
+For storage with the NFS node, a CSI plugin will be configured using the [RocketDuck CSI plugin](https://gitlab.com/rocketduck/csi-plugin-nfs).
 
-The PortWorx plugin probably will not work under LXD
+
+The are also examples of [other CSI plugins](csi_plugins).
 
 ## Examples
 
