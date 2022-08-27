@@ -50,6 +50,12 @@ job "proxy" {
         left_delimiter  = "[["
         right_delimiter = "]]"
         data            = <<EOF
+entryPoints:
+  http:
+    address: ":80"
+    forwardedHeaders:
+      insecure: true
+
 accessLog:
   filePath: /var/log/traefik/access.log
 
@@ -76,6 +82,16 @@ EOF
         destination = "local/nomad.yaml"
         data        = <<EOF
 http:
+  serversTransports:
+    httpsInsecure:
+      insecureSkipVerify: true
+
+  middlewares:
+    forwarded-https:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: https
+
   routers:
     consul:
       service: consul
@@ -84,6 +100,12 @@ http:
     nomad:
       service: nomad
       rule: "Host(`nomad.{{ proxy_route_suffix }}`)"
+
+    waypoint-ui:
+      service: waypoint-ui
+      middlewares:
+        - forwarded-https
+      rule: "Host(`waypoint-ui.apps.{{ proxy_route_suffix }}`)"
 
   services:
     consul:
@@ -95,6 +117,12 @@ http:
       loadBalancer:
         servers:
           - url: http://nomad.service.consul:4646
+
+    waypoint-ui:
+      loadBalancer:
+        serversTransport: httpsInsecure
+        servers:
+          - url: https://waypoint-ui.service.consul:9702
 
 EOF
       }

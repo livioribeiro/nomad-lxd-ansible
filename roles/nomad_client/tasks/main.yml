@@ -25,6 +25,12 @@
   become: yes
   command: mount --make-shared /
 
+- name: make / shared at startup
+  ansible.builtin.cron:
+    name: make / shared at startup
+    special_time: reboot
+    job: mount --make-shared /
+
 - name: add docker apt key
   apt_key:
     url: "{{ docker_gpg_url }}"
@@ -40,6 +46,30 @@
     name: docker-ce
     state: present
     update_cache: yes
+
+- name: copy consul resolved config
+  copy:
+    src: docker-dns.conf
+    dest: /etc/systemd/resolved.conf.d/docker.conf
+  register: resolved_config
+
+- name: restart resolved
+  when: resolved_config.changed
+  service:
+    name: systemd-resolved
+    state: restarted
+
+- name: copy docker daemon config
+  copy:
+    src: daemon.json
+    dest: /etc/docker/
+  register: docker_daemon_config
+
+- name: restart docker
+  when: docker_daemon_config.changed
+  service:
+    name: docker
+    state: restarted
 
 # - name: install openjdk
 #   apt:

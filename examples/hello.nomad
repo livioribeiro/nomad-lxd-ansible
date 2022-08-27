@@ -10,18 +10,6 @@ job "hello-world" {
       port "http" {}
     }
 
-    # exposed service
-    service {
-      # service name, compose the url like 'hello-world.service.myorg.com'
-      name = "hello-world"
-      # service will bind to this port
-      port = "http"
-      # tell traefik to expose this service
-      tags = [
-        "urlprefix-/",
-      ]
-    }
-
     task "server" {
       # we will run a docker container
       driver = "docker"
@@ -42,6 +30,16 @@ job "hello-world" {
       resources {
         cpu    = 50
         memory = 30
+      }
+
+      # exposed service
+      service {
+        # service name, compose the url like 'hello-world.service.myorg.com'
+        name = "hello-world"
+        # service will bind to this port
+        port = "http"
+        # tell traefik to expose this service
+        tags = ["traefik.enable=true"]
       }
     }
   }

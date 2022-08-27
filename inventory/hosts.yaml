@@ -16,13 +16,13 @@ all:
         nomad-server[1:3]:
     nomad_clients:
       children:
-        nomad_apps_clients:
+        nomad_clients_apps:
           hosts:
-            nomad-apps-client[1:3]:
+            nomad-client-apps[1:2]:
           vars:
             datacenter: apps
-        nomad_infra_clients:
+        nomad_clients_infra:
           hosts:
-            nomad-infra-client1:
+            nomad-client-infra1:
           vars:
             datacenter: infra

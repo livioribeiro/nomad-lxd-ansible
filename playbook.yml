@@ -24,7 +24,7 @@
         source: *container_image_source
         config:
           limits.cpu: "1"
-          limits.memory: 2GB
+          limits.memory: 3GB
           security.nesting: "true"
           security.privileged: "true"
           raw.lxc: |-
@@ -34,7 +34,7 @@
 
     - name: create nomad client infra containers
       community.general.lxd_container:
-        name: nomad-infra-client1
+        name: nomad-client-infra1
         devices:
           map_port_80:
             type: proxy
@@ -70,11 +70,13 @@
   hosts: nomad_servers:nomad_clients
   roles:
     - consul_client
+    - consul_dns
 
 # - name: setup vault
 #   hosts: vault_servers
 #   roles:
 #     - vault_server
+#     - consul_dns
 
 - name: setup nfs server
   hosts: nfs-server
@@ -95,7 +97,6 @@
   hosts: nomad_clients
   roles:
     - nomad_client
-    - consul_dns
 
 - name: run nomad jobs
   hosts: nomad-server1

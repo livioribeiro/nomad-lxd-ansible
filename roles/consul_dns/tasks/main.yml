@@ -4,10 +4,10 @@
     path: /etc/systemd/resolved.conf.d
     state: directory
 
-- name: copy resolved config
+- name: copy consul resolved config
   copy:
-    src: resolved.conf
-    dest: /etc/systemd/resolved.conf.d/consul.conf
+    src: consul.conf
+    dest: /etc/systemd/resolved.conf.d/
   register: resolved_config
 
 - name: restart resolved
