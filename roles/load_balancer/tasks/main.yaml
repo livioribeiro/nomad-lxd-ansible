@@ -1,0 +1,19 @@
+---
+- name: install haproxy
+  apt:
+    name: haproxy
+    state: present
+    update_cache: yes
+
+- name: copy haproxy config
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+  register: haproxy_config
+
+- name: start haproxy
+  when: haproxy_config and haproxy_config.changed
+  service:
+    name: haproxy
+    state: restarted
+    enabled: yes

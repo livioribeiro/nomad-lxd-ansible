@@ -1,0 +1,190 @@
+---
+- name: create ssh keys directory
+  ansible.builtin.file:
+    path: ./ssh
+    state: directory
+
+- name: create ssh key
+  community.crypto.openssh_keypair:
+    path: ./ssh/id_rsa
+  register: ssh_key
+
+- name: create consul servers
+  register: consul_servers
+  loop:
+    - consul-server1
+    - consul-server2
+    - consul-server3
+  community.general.lxd_container:
+    name: "{{ item }}"
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source: &container_image_source
+      type: image
+      mode: pull
+      server: https://images.linuxcontainers.org
+      protocol: simplestreams
+      alias: "ubuntu/{{ ubuntu_version }}/cloud"
+    config:
+      user.user-data: &cloud_init |
+        #cloud-config
+        ssh_authorized_keys:
+          - {{ ssh_key.public_key }}
+
+        packages:
+          - openssh-server
+
+- name: create nomad servers
+  register: nomad_servers
+  loop:
+    - nomad-server1
+    - nomad-server2
+    - nomad-server3
+  community.general.lxd_container:
+    name: "{{ item }}"
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source: *container_image_source
+    config:
+      user.user-data: *cloud_init
+
+- name: create nomad infra client
+  register: nomad_infra_clients
+  loop:
+    - nomad-infra-client1
+    - nomad-infra-client2
+  community.general.lxd_container:
+    name: "{{ item }}"
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source: *container_image_source
+    config: &nomad_client_config
+      user.user-data: *cloud_init
+      limits.cpu: "1"
+      limits.memory: 2GB
+      security.nesting: "true"
+      security.privileged: "true"
+      raw.lxc: |-
+        lxc.apparmor.profile=unconfined
+        lxc.cgroup.devices.allow=a
+        lxc.cap.drop=
+
+- name: create nomad client containers
+  register: nomad_apps_clients
+  loop:
+    - nomad-apps-client1
+    - nomad-apps-client2
+    - nomad-apps-client3
+  community.general.lxd_container:
+    name: "{{ item }}"
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source: *container_image_source
+    config: *nomad_client_config
+
+- name: create nfs server container
+  register: nfs_server
+  community.general.lxd_container:
+    name: nfs-server
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source: *container_image_source
+    config:
+      user.user-data: *cloud_init
+      security.privileged: "true"
+      raw.apparmor: "mount fstype=rpc_pipefs, mount fstype=nfsd,"
+
+- name: create load balancer container
+  register: load_balancer
+  community.general.lxd_container:
+    name: load-balancer
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source: *container_image_source
+    config:
+      user.user-data: *cloud_init
+    devices:
+      map_port_80:
+        type: proxy
+        listen: tcp:0.0.0.0:80
+        connect: tcp:127.0.0.1:80
+
+- name: add consul server hosts
+  loop: "{{ consul_servers.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  ansible.builtin.add_host:
+    name: "{{ item.item }}"
+    groups: consul_servers
+    ansible_host: "{{ item.addresses.eth0[0] }}"
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: ./ssh/id_rsa
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_become: "true"
+
+- name: add nomad server hosts
+  loop: "{{ nomad_servers.results  }}"
+  loop_control:
+    label: "{{ item.item }}"
+  ansible.builtin.add_host:
+    name: "{{ item.item }}"
+    groups: nomad_servers
+    ansible_host: "{{ item.addresses.eth0[0] }}"
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: ./ssh/id_rsa
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_become: "true"
+
+- name: add nomad infra client hosts
+  loop: "{{ nomad_infra_clients.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  ansible.builtin.add_host:
+    name: "{{ item.item }}"
+    groups:
+      - nomad_clients
+      - nomad_infra_clients
+    ansible_host: "{{ item.addresses.eth0[0] }}"
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: ./ssh/id_rsa
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_become: "true"
+
+- name: add nomad apps client hosts
+  loop: "{{ nomad_apps_clients.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  ansible.builtin.add_host:
+    name: "{{ item.item }}"
+    groups:
+      - nomad_clients
+      - nomad_apps_clients
+    ansible_host: "{{ item.addresses.eth0[0] }}"
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: ./ssh/id_rsa
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_become: "true"
+
+- name: add nfs server host
+  ansible.builtin.add_host:
+    name: nfs-server
+    ansible_host: "{{ nfs_server.addresses.eth0[0] }}"
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: ./ssh/id_rsa
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_become: "true"
+
+- name: add load balancer host
+  ansible.builtin.add_host:
+    name: load-balancer
+    ansible_host: "{{ load_balancer.addresses.eth0[0] }}"
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: ./ssh/id_rsa
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_become: "true"

@@ -16,7 +16,6 @@
     dest: /etc/exports
 
 - name: apply exports
-  become: yes
   command: exportfs -a
 
 - name: start nfs server

@@ -3,6 +3,11 @@ variable "version" {
   default = "v2.8.3"
 }
 
+variable "proxy_suffix" {
+  type = string
+  default = "localhost"
+}
+
 job "proxy" {
   datacenters = ["infra"]
   type        = "system"
@@ -72,7 +77,7 @@ providers:
     directory: /etc/traefik/conf/
   consulCatalog:
     exposedByDefault: false
-    defaultRule: "Host(`{% raw %}{{ normalize .Name }}{% endraw %}.apps.{{ proxy_route_suffix }}`)"
+    defaultRule: "Host(`{{ normalize .Name }}.apps.${var.proxy_suffix}`)"
     connectAware: true
 
 EOF
@@ -93,30 +98,14 @@ http:
           X-Forwarded-Proto: https
 
   routers:
-    consul:
-      service: consul
-      rule: "Host(`consul.{{ proxy_route_suffix }}`)"
-
-    nomad:
-      service: nomad
-      rule: "Host(`nomad.{{ proxy_route_suffix }}`)"
 
     waypoint-ui:
       service: waypoint-ui
       middlewares:
         - forwarded-https
-      rule: "Host(`waypoint-ui.apps.{{ proxy_route_suffix }}`)"
+      rule: "Host(`waypoint-ui.apps.${var.proxy_suffix}`)"
 
   services:
-    consul:
-      loadBalancer:
-        servers:
-          - url: http://consul.service.consul:8500
-
-    nomad:
-      loadBalancer:
-        servers:
-          - url: http://nomad.service.consul:4646
 
     waypoint-ui:
       loadBalancer:

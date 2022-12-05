@@ -4,55 +4,7 @@
   # run this task in the host
   connection: local
   tasks:
-    - name: create server containers
-      loop: "{{ groups['consul_servers'] + groups['nomad_servers'] }}"
-      community.general.lxd_container:
-        name: "{{ item }}"
-        state: started
-        source: &container_image_source
-          type: image
-          mode: pull
-          server: https://images.linuxcontainers.org
-          protocol: simplestreams
-          alias: "ubuntu/{{ ubuntu_version }}/amd64"
-
-    - name: create nomad client containers
-      loop: "{{ groups['nomad_clients'] }}"
-      community.general.lxd_container:
-        name: "{{ item }}"
-        state: started
-        source: *container_image_source
-        config:
-          limits.cpu: "1"
-          limits.memory: 3GB
-          security.nesting: "true"
-          security.privileged: "true"
-          raw.lxc: |-
-            lxc.apparmor.profile=unconfined
-            lxc.cgroup.devices.allow=a
-            lxc.cap.drop=
-
-    - name: create nomad client infra containers
-      community.general.lxd_container:
-        name: nomad-client-infra1
-        devices:
-          map_port_80:
-            type: proxy
-            listen: tcp:0.0.0.0:80
-            connect: tcp:127.0.0.1:80
-          map_port_8080:
-            type: proxy
-            listen: tcp:0.0.0.0:8080
-            connect: tcp:127.0.0.1:8080
-
-    - name: create nfs server container
-      community.general.lxd_container:
-        name: nfs-server
-        state: started
-        source: *container_image_source
-        config:
-          security.privileged: "true"
-          raw.apparmor: "mount fstype=rpc_pipefs, mount fstype=nfsd,"
+    - ansible.builtin.import_tasks: servers.yml
 
 - name: install consul service
   hosts: consul_servers:nomad_servers:nomad_clients
@@ -98,7 +50,19 @@
   roles:
     - nomad_client
 
-- name: run nomad jobs
-  hosts: nomad-server1
+- name: setup load balancer
+  hosts: load-balancer
   roles:
-    - nomad_jobs
+    - load_balancer
+
+- name: setup nomad jobs
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: execute terraform
+      ansible.builtin.terraform:
+        project_path: ./terraform
+        state: present
+        force_init: true
+        variables:
+          nomad_address: "http://{{ hostvars['nomad-server1'].ansible_default_ipv4.address }}:4646"

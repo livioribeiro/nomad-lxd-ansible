@@ -22,7 +22,6 @@
     update_cache: yes
 
 - name: make / shared
-  become: yes
   command: mount --make-shared /
 
 - name: make / shared at startup
@@ -87,6 +86,7 @@
     remote_src: yes
     dest: /opt/cni/bin/
     mode: 0755
+    creates: /opt/cni/bin/bridge
 
 - name: copy nomad config
   template:

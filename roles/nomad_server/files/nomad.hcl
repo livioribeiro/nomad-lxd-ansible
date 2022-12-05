@@ -1,4 +1,5 @@
-data_dir = "/var/nomad"
+data_dir   = "/var/nomad"
+datacenter = "infra"
 
 server {
   enabled          = true
