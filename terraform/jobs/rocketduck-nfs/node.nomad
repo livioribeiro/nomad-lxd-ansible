@@ -1,6 +1,6 @@
 variable "version" {
   type = string
-  default = "0.4.0"
+  default = "0.6.1"
 }
 
 job "storage-node" {
@@ -34,8 +34,8 @@ job "storage-node" {
       }
 
       resources {
-        cpu    = 300
-        memory = 100
+        cpu    = 400
+        memory = 120
       }
 
     }

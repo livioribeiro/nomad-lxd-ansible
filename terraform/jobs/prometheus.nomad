@@ -1,10 +1,10 @@
 variable "version" {
   type = string
-  default = "v2.38.0"
+  default = "v2.41.0"
 }
 
 job "prometheus" {
-  datacenters = ["infra"]
+  datacenters = ["infra", "apps"]
   type        = "service"
   namespace   = "system-monitoring"
 

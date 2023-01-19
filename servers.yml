@@ -129,7 +129,7 @@
     ansible_become: "true"
 
 - name: add nomad server hosts
-  loop: "{{ nomad_servers.results  }}"
+  loop: "{{ nomad_servers.results }}"
   loop_control:
     label: "{{ item.item }}"
   ansible.builtin.add_host:

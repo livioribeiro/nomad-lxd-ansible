@@ -1,6 +1,6 @@
 variable "version" {
   type = string
-  default = "v2.8.3"
+  default = "v3.0"
 }
 
 variable "proxy_suffix" {
@@ -87,9 +87,6 @@ EOF
         destination = "local/nomad.yaml"
         data        = <<EOF
 http:
-  serversTransports:
-    httpsInsecure:
-      insecureSkipVerify: true
 
   middlewares:
     forwarded-https:
@@ -98,7 +95,6 @@ http:
           X-Forwarded-Proto: https
 
   routers:
-
     waypoint-ui:
       service: waypoint-ui
       middlewares:
@@ -106,12 +102,10 @@ http:
       rule: "Host(`waypoint-ui.apps.${var.proxy_suffix}`)"
 
   services:
-
     waypoint-ui:
       loadBalancer:
-        serversTransport: httpsInsecure
         servers:
-          - url: https://waypoint-ui.service.consul:9702
+          - url: http://waypoint-ui.service.consul:9703
 
 EOF
       }

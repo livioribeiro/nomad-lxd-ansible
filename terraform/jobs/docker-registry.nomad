@@ -1,5 +1,12 @@
+variable "version" {
+  type = string
+  default = "2"
+}
+
 job "docker-registry" {
-  datacenters = ["infra"]
+  datacenters = ["infra", "apps"]
+  type = "service"
+  namespace   = "system-monitoring"
 
   group "registry" {
     count = 1
@@ -20,7 +27,7 @@ job "docker-registry" {
       driver = "docker"
 
       config {
-        image = "registry:2"
+        image = "registry:${var.version}"
         ports = ["docker"]
       }
 
