@@ -1,10 +1,10 @@
 variable "version" {
-  type = string
+  type    = string
   default = "v3.0"
 }
 
 variable "proxy_suffix" {
-  type = string
+  type    = string
   default = "localhost"
 }
 
@@ -46,7 +46,6 @@ job "proxy" {
 
         volumes = [
           "local/traefik.yaml:/etc/traefik/traefik.yaml",
-          "local/nomad.yaml:/etc/traefik/conf/nomad.yaml",
         ]
       }
 
@@ -79,33 +78,6 @@ providers:
     exposedByDefault: false
     defaultRule: "Host(`{{ normalize .Name }}.apps.${var.proxy_suffix}`)"
     connectAware: true
-
-EOF
-      }
-
-      template {
-        destination = "local/nomad.yaml"
-        data        = <<EOF
-http:
-
-  middlewares:
-    forwarded-https:
-      headers:
-        customRequestHeaders:
-          X-Forwarded-Proto: https
-
-  routers:
-    waypoint-ui:
-      service: waypoint-ui
-      middlewares:
-        - forwarded-https
-      rule: "Host(`waypoint-ui.apps.${var.proxy_suffix}`)"
-
-  services:
-    waypoint-ui:
-      loadBalancer:
-        servers:
-          - url: http://waypoint-ui.service.consul:9703
 
 EOF
       }

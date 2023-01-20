@@ -1,12 +1,12 @@
 variable "version" {
-  type = string
+  type    = string
   default = "0.3.7"
 }
 
 job "autoscaler" {
-  type = "service"
+  type        = "service"
   datacenters = ["infra"]
-  namespace = "system-autoscaling"
+  namespace   = "system-autoscaling"
 
   group "autoscaler" {
     count = 1

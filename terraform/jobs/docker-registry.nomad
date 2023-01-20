@@ -1,12 +1,12 @@
 variable "version" {
-  type = string
+  type    = string
   default = "2"
 }
 
 job "docker-registry" {
   datacenters = ["infra", "apps"]
-  type = "service"
-  namespace   = "system-monitoring"
+  type        = "service"
+  namespace   = "system-registry"
 
   group "registry" {
     count = 1
