@@ -7,6 +7,10 @@ server {
   raft_protocol    = 3
 }
 
+acl {
+  enabled = true
+}
+
 telemetry {
   prometheus_metrics         = true
   disable_hostname           = true

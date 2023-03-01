@@ -1,0 +1,39 @@
+---
+- name: Wait for consul to fully initialize
+  ansible.builtin.wait_for:
+    timeout: 30
+
+- name: Bootstrap consul acl
+  run_once: true
+  ansible.builtin.command:
+    consul acl bootstrap -format=json
+  register: acl_bootstrap
+  changed_when: '"SecretID" in acl_bootstrap.stdout'
+  failed_when:
+    - acl_bootstrap.rc != 0
+    - '"ACL bootstrap no longer allowed" not in acl_bootstrap.stderr'
+  retries: 3
+  delay: 10
+
+- name: Define agent token
+  ansible.builtin.set_fact:
+    consul_agent_token: '{{ (inventory_hostname + ".agent.consul") | to_uuid(namespace="6ba7b810-9dad-11d1-80b4-00c04fd430c8") }}'
+
+- name: Create consul agent token
+  ansible.builtin.command:
+    consul acl token create
+      -http-addr https://localhost:8501
+      -ca-file /etc/certs.d/ca.pem
+      -client-cert /etc/certs.d/cert.pem
+      -client-key /etc/certs.d/private_key.pem
+      -token "{{ consul_management_token }}"
+      -description "{{ ansible_hostname }} agent token"
+      -node-identity "{{ ansible_hostname }}:dc1"
+      -secret "{{ consul_agent_token }}"
+  register: create_agent_token
+  changed_when: create_agent_token.rc == 0
+  failed_when:
+    - create_agent_token.rc != 0
+    - '"SecretID is already in use" not in create_agent_token.stderr'
+  retries: 3
+  delay: 10

@@ -1,0 +1,39 @@
+ui = true
+disable_mlock = true
+
+listener "tcp" {
+  address       = "0.0.0.0:8200"
+  tls_cert_file = "/etc/certs.d/cert_combined.pem"
+  tls_key_file  = "/etc/certs.d/private_key.pem"
+
+  telemetry {
+    unauthenticated_metrics_access = true
+  }
+}
+
+service_registration "consul" {
+  token = "{{ consul_token }}"
+}
+
+storage "raft" {
+  path    = "/opt/vault/data"
+  node_id = "{{ ansible_hostname }}"
+
+  {% for host in groups["vault_servers"] -%}
+  {% if host != ansible_hostname -%}
+  retry_join {
+    leader_api_addr         = "https://{{ hostvars[host].ansible_host }}:8200"
+    leader_ca_cert_file     = "/etc/certs.d/ca.pem"
+    leader_client_cert_file = "/etc/certs.d/cert.pem"
+    leader_client_key_file  = "/etc/certs.d/private_key.pem"
+  }
+  {% endif -%}
+  {% endfor -%}
+}
+
+api_addr     = "https://{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}:8200"
+cluster_addr = "https://{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}:8201"
+
+telemetry {
+  disable_hostname = true
+}

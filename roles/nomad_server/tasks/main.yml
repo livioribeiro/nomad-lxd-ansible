@@ -1,14 +1,176 @@
 ---
-
-- name: copy nomad config
-  copy:
-    src: nomad.hcl
-    dest: /etc/nomad.d/nomad.hcl
-  register: nomad_config
-
-- name: restart nomad
-  when: nomad_config.changed
-  service:
+- name: Install Nomad
+  ansible.builtin.apt:
     name: nomad
-    state: restarted
-    enabled: yes
+    state: present
+    update_cache: true
+
+- name: Create Nomad certs
+  ansible.builtin.import_role:
+    name: certs_server
+  vars:
+    owner: nomad
+    alt_names:
+      - IP:127.0.0.1
+      - 'IP:{{ ansible_host }}'
+      - DNS:localhost
+      - DNS:server.global.nomad
+      - DNS:nomad.service.consul
+      - 'DNS:nomad.{{ external_domain }}'
+
+- name: Create Consul Nomad token
+  ansible.builtin.import_role:
+    name: consul_token
+  vars:
+    token_file: /etc/nomad.d/consul_token.txt
+    policy_name: nomad-server
+    policy_rules: |
+      agent_prefix "" {
+        policy = "read"
+      }
+
+      node_prefix "" {
+        policy = "read"
+      }
+
+      service_prefix "" {
+        policy = "write"
+      }
+
+      acl = "write"
+
+- name: Read Consul Nomad token
+  ansible.builtin.slurp:
+    path: /etc/nomad.d/consul_token.txt
+  register: read_consul_token
+
+- name: Read Vault root token
+  ansible.builtin.set_fact:
+    vault_root_token: '{{ lookup("file", ".tmp/root_token_vault.txt") }}'
+
+- name: Check Vault Nomad policy
+  run_once: true
+  delegate_to: vault-server1
+  ansible.builtin.command:
+    VAULT_TOKEN={{ vault_root_token }} vault policy read -tls-skip-verify nomad-server
+  failed_when: false
+  register: check_vault_token
+
+- name: Create Vault Nomad policy
+  when: check_vault_token.rc != 0
+  run_once: true
+  delegate_to: vault-server1
+  ansible.builtin.shell:
+    stdin: |
+      # Allow creating tokens under "nomad-cluster" token role. The token role name
+      # should be updated if "nomad-cluster" is not used.
+      path "auth/token/create/nomad-cluster" {
+        capabilities = ["update"]
+      }
+
+      # Allow looking up "nomad-cluster" token role. The token role name should be
+      # updated if "nomad-cluster" is not used.
+      path "auth/token/roles/nomad-cluster" {
+        capabilities = ["read"]
+      }
+
+      # Allow looking up the token passed to Nomad to validate # the token has the
+      # proper capabilities. This is provided by the "default" policy.
+      path "auth/token/lookup-self" {
+        capabilities = ["read"]
+      }
+
+      # Allow looking up incoming tokens to validate they have permissions to access
+      # the tokens they are requesting. This is only required if
+      # `allow_unauthenticated` is set to false.
+      path "auth/token/lookup" {
+        capabilities = ["update"]
+      }
+
+      # Allow revoking tokens that should no longer exist. This allows revoking
+      # tokens for dead tasks.
+      path "auth/token/revoke-accessor" {
+        capabilities = ["update"]
+      }
+
+      # Allow checking the capabilities of our own token. This is used to validate the
+      # token upon startup. Note this requires update permissions because the Vault API
+      # is a POST
+      path "sys/capabilities-self" {
+        capabilities = ["update"]
+      }
+
+      # Allow our own token to be renewed.
+      path "auth/token/renew-self" {
+        capabilities = ["update"]
+      }
+    cmd: VAULT_TOKEN={{ vault_root_token }} vault policy write -tls-skip-verify nomad-server -
+
+- name: Check Vault Nomad token role
+  run_once: true
+  delegate_to: vault-server1
+  ansible.builtin.shell:
+    VAULT_TOKEN={{ vault_root_token }} vault read -tls-skip-verify /auth/token/roles/nomad-cluster
+  failed_when: false
+  register: check_vault_token_role
+
+- name: Create Vault Nomad token role
+  when: check_vault_token_role.rc != 0
+  run_once: true
+  delegate_to: vault-server1
+  ansible.builtin.shell:
+    stdin: |
+      {
+        "disallowed_policies": "nomad-server",
+        "token_explicit_max_ttl": 0,
+        "name": "nomad-cluster",
+        "orphan": true,
+        "token_period": 259200,
+        "renewable": true
+      }
+    cmd: VAULT_TOKEN={{ vault_root_token }} vault write -tls-skip-verify /auth/token/roles/nomad-cluster -
+
+- name: Check Vault Nomad token
+  ansible.builtin.stat:
+    path: /etc/nomad.d/vault_token.txt
+  register: check_vault_token
+
+- name: Create Vault Nomad token
+  when: not check_vault_token.stat.exists
+  delegate_to: vault-server1
+  ansible.builtin.shell:
+    VAULT_TOKEN={{ vault_root_token }}
+    vault token create
+      -policy nomad-server
+      -period 72h
+      -orphan
+      -format json
+  register: vault_nomad_token
+
+- name: Save Vault Nomad token
+  when: not check_vault_token.stat.exists
+  ansible.builtin.copy:
+    content: '{{ "auth" | extract(vault_nomad_token.stdout | from_json, morekeys="client_token") }}'
+    dest: /etc/nomad.d/vault_token.txt
+    owner: nomad
+    mode: 0600
+
+- name: Read Vault Nomad token
+  ansible.builtin.slurp:
+    src: /etc/nomad.d/vault_token.txt
+  register: read_vault_nomad_token
+
+- name: Read Nomad encrypt key
+  ansible.builtin.set_fact:
+    nomad_encrypt_key: '{{ lookup("file", ".tmp/encrypt_keys/nomad.txt") }}'
+
+- name: Copy Nomad config
+  ansible.builtin.template:
+    src: nomad.hcl.j2
+    dest: /etc/nomad.d/nomad.hcl
+    owner: nomad
+    mode: 0644
+  vars:
+    consul_token: '{{ read.consul_token.content | b64decode }}'
+    vault_token: '{{ read_vault_nomad_token.content | b64decode }}'
+  notify: Restart Nomad

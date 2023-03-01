@@ -1,0 +1,24 @@
+---
+- name: Install HAProxy
+  ansible.builtin.apt:
+    name: haproxy
+    state: present
+    update_cache: true
+
+- name: Copy Nomad cert with private key combined
+  ansible.builtin.copy:
+    content: |
+      {{ lookup("file", ".tmp/certs/nomad_client/private_key.pem") }}
+      {{ lookup("file", ".tmp/certs/nomad_client/cert.pem") }}
+    dest: '/etc/certs.d/nomad.crt'
+    owner: haproxy
+    mode: 0600
+  notify: Restart HAProxy
+
+- name: Copy HAProxy config
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    owner: haproxy
+    mode: 0600
+  notify: Restart HAProxy

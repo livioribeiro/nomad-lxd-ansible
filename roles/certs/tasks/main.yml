@@ -1,0 +1,71 @@
+---
+- name: Set facts
+  ansible.builtin.set_fact:
+    ca_certs_dir: '{{ playbook_dir }}/.tmp/certs/ca/'
+    nomad_certs_dir: '{{ playbook_dir }}/.tmp/certs/nomad/client'
+
+- name: Create certs dirs
+  loop:
+    - .tmp/certs/ca
+    - .tmp/certs/consul_client
+    - .tmp/certs/nomad_client
+  ansible.builtin.file:
+    path: '{{ playbook_dir }}/{{ item }}'
+    state: directory
+    mode: 0755
+
+- name: Create CA private key
+  community.crypto.openssl_privatekey:
+    path: '{{ playbook_dir }}/.tmp/certs/ca/private_key.pem'
+  register: ca_private_key
+
+- name: Create CA certificate signing request
+  community.crypto.openssl_csr:
+    path: '{{ ca_certs_dir }}/csr.pem'
+    privatekey_path: '{{ ca_private_key.filename }}'
+    common_name: Nomad Cluster CA
+    use_common_name_for_san: false  # since we do not specify SANs, don't use CN as a SAN
+    basic_constraints:
+      - 'CA:TRUE'
+    basic_constraints_critical: true
+    key_usage:
+      - keyCertSign
+    key_usage_critical: true
+  register: ca_csr
+
+- name: Create self-signed CA certificate from CSR
+  community.crypto.x509_certificate:
+    path: '{{ ca_certs_dir }}/cert.pem'
+    csr_path: '{{ ca_csr.filename }}'
+    privatekey_path: '{{ ca_private_key.filename }}'
+    provider: selfsigned
+  register: ca_certificate
+
+# Nomad Client
+- name: Create Nomad client private key
+  community.crypto.openssl_privatekey:
+    path: '.tmp/certs/nomad_client/private_key.pem'
+  register: nomad_client_private_key
+
+- name: Create Nomad client certificate signing request
+  community.crypto.openssl_csr:
+    path: '.tmp/certs/nomad_client/csr.pem'
+    privatekey_path: '{{ nomad_client_private_key.filename }}'
+    subject_alt_name:
+      - IP:127.0.0.1
+      - DNS:localhost
+      - DNS:client.global.nomad
+      - DNS:nomad-client.service.consul
+    extended_key_usage:
+      - clientAuth
+  register: nomad_client_csr
+
+- name: Sign Nomad client certificate
+  community.crypto.x509_certificate:
+    path: '.tmp/certs/nomad_client/cert.pem'
+    provider: ownca
+    csr_path: '{{ nomad_client_csr.filename }}'
+    ownca_path: '{{ ca_certificate.filename }}'
+    ownca_privatekey_path: '{{ ca_private_key.filename }}'
+    ownca_not_after: "+3650d"
+    ownca_not_before: "-1d"

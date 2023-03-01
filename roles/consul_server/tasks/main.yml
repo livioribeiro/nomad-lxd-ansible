@@ -1,14 +1,40 @@
 ---
+- name: Read Consul management token and encrypt key
+  ansible.builtin.set_fact:
+    consul_management_token: '{{ lookup("file", ".tmp/root_token_consul.txt") }}'
+    consul_encrypt_key: '{{ lookup("file", ".tmp/encrypt_keys/consul.txt") }}'
 
-- name: copy consul config
-  template:
+- name: Define agent token
+  ansible.builtin.set_fact:
+    consul_agent_token: '{{ (inventory_hostname + ".agent.consul") | to_uuid(namespace="6ba7b810-9dad-11d1-80b4-00c04fd430c8") }}'
+
+- name: Install Consul
+  ansible.builtin.apt:
+    name: consul
+    state: present
+    update_cache: true
+
+- name: Include CA cert
+  ansible.builtin.import_role:
+    name: ca_cert
+
+- name: Create Consul certs
+  ansible.builtin.import_role:
+    name: certs_server
+  vars:
+    owner: consul
+    alt_names:
+      - IP:127.0.0.1
+      - 'IP:{{ ansible_host }}'
+      - DNS:localhost
+      - DNS:server.dc1.consul
+      - DNS:consul.service.consul
+      - 'DNS:consul.{{ external_domain }}'
+
+- name: Copy Consul config
+  ansible.builtin.template:
     src: consul.hcl.j2
     dest: /etc/consul.d/consul.hcl
-  register: consul_config
-
-- name: restart consul
-  when: consul_config.changed
-  service:
-    name: consul
-    state: restarted
-    enabled: yes
+    owner: consul
+    mode: 0600
+  notify: Restart Consul

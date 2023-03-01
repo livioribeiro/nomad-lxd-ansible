@@ -1,0 +1,30 @@
+---
+- name: Wait for vault to fully initialize
+  ansible.builtin.wait_for:
+    timeout: 30
+
+- name: Check vault status
+  ansible.builtin.command:
+    vault status -tls-skip-verify -format=json
+  register: vault_status_result
+  changed_when: false
+  failed_when: vault_status_result.rc not in [0, 2]
+
+- name: Parse vault status
+  ansible.builtin.set_fact:
+    vault_status: '{{ vault_status_result.stdout | from_json }}'
+
+- name: Read vault init
+  when: vault_status["sealed"]
+  ansible.builtin.set_fact:
+    vault_init: '{{ lookup("file", ".tmp/vault_init.json") | from_json }}'
+
+- name: Unseal vault
+  when: vault_status["sealed"]
+  loop: '{{ vault_init["unseal_keys_hex"] }}'
+  ansible.builtin.command:
+    'vault operator unseal -tls-skip-verify {{ item }}'
+  register: unseal_result
+  until: unseal_result.rc == 0
+  retries: 10
+  delay: 15

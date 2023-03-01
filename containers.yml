@@ -1,0 +1,159 @@
+---
+- name: Create nomad network
+  ansible.builtin.command:
+    lxc network create lxdnomadbr0 --type bridge ipv4.address=10.99.0.1/16 ipv4.nat=true ipv6.address=none
+  register: nomad_network
+  changed_when: nomad_network.rc == 0
+  failed_when:
+    - nomad_network.rc != 0
+    - '"The network already exists" not in nomad_network.stderr'
+
+- name: Create nomad profile
+  community.general.lxd_profile:
+    name: nomad
+    devices:
+      eth0:
+        type: nic
+        network: lxdnomadbr0
+      root:
+        type: disk
+        pool: default
+        path: /
+
+- name: Create ssh keys directory
+  ansible.builtin.file:
+    path: .tmp/ssh
+    state: directory
+
+- name: Create ssh key
+  community.crypto.openssh_keypair:
+    path: .tmp/ssh/id_rsa
+  register: ssh_key
+
+- name: Create servers
+  loop: '{{ groups["consul_servers"] + groups["vault_servers"] + groups["nomad_servers"] }}'
+  community.general.lxd_container:
+    name: '{{ hostvars[item].inventory_hostname }}'
+    profiles:
+      - nomad
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source: &container_image_source
+      type: image
+      mode: pull
+      server: https://images.linuxcontainers.org
+      protocol: simplestreams
+      alias: 'ubuntu/{{ ubuntu_version }}/cloud'
+    config:
+      cloud-init.user-data: &cloud_init |
+        #cloud-config
+        ssh_authorized_keys:
+          - {{ ssh_key.public_key }}
+
+        packages:
+          - openssh-server
+      cloud-init.network-config: |
+        version: 2
+        ethernets:
+          eth0:
+            addresses:
+              - {{ hostvars[item].ansible_host }}/16
+            routes:
+              - to: default
+                via: {{ gateway_address }}
+            nameservers:
+              addresses:
+                - 9.9.9.9
+                - 149.112.112.112
+
+- name: create nomad clients
+  loop: '{{ groups["nomad_infra_clients"] + groups["nomad_apps_clients"] }}'
+  community.general.lxd_container:
+    name: '{{ hostvars[item].inventory_hostname }}'
+    profiles:
+      - nomad
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source: *container_image_source
+    config:
+      cloud-init.user-data: *cloud_init
+      limits.cpu: '1'
+      limits.memory: 4GB
+      security.nesting: 'true'
+      security.privileged: 'true'
+      raw.lxc: |-
+        lxc.apparmor.profile=unconfined
+        lxc.cgroup.devices.allow=a
+        lxc.cap.drop=
+      cloud-init.network-config: |
+        version: 2
+        ethernets:
+          eth0:
+            addresses:
+              - {{ hostvars[item].ansible_host }}/16
+            routes:
+              - to: default
+                via: {{ gateway_address }}
+            nameservers:
+              addresses:
+                - 9.9.9.9
+                - 149.112.112.112
+
+- name: Create nfs server
+  community.general.lxd_container:
+    name: '{{ hostvars["nfs-server"].inventory_hostname }}'
+    profiles:
+      - nomad
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source: *container_image_source
+    config:
+      cloud-init.user-data: *cloud_init
+      security.privileged: 'true'
+      raw.apparmor: 'mount fstype=rpc_pipefs, mount fstype=nfsd,'
+      cloud-init.network-config: |
+        version: 2
+        ethernets:
+          eth0:
+            addresses:
+              - {{ hostvars["nfs-server"].ansible_host }}/16
+            routes:
+              - to: default
+                via: {{ gateway_address }}
+            nameservers:
+              addresses:
+                - 9.9.9.9
+                - 149.112.112.112
+
+- name: Create load balancer
+  community.general.lxd_container:
+    name: '{{ hostvars["load-balancer"].inventory_hostname }}'
+    profiles:
+      - nomad
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source: *container_image_source
+    config:
+      cloud-init.user-data: *cloud_init
+      cloud-init.network-config: |
+        version: 2
+        ethernets:
+          eth0:
+            addresses:
+              - {{ hostvars["load-balancer"].ansible_host }}/16
+            routes:
+              - to: default
+                via: {{ gateway_address }}
+            nameservers:
+              addresses:
+                - 9.9.9.9
+                - 149.112.112.112
+    devices:
+      map_port_80:
+        type: proxy
+        listen: tcp:0.0.0.0:80
+        connect: tcp:127.0.0.1:80

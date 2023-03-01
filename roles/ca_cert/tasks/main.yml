@@ -1,0 +1,23 @@
+---
+- name: Create certs.d directory
+  ansible.builtin.file:
+    path: /etc/certs.d
+    state: directory
+    mode: 0755
+
+- name: Copy ca certificate
+  ansible.builtin.copy:
+    src: .tmp/certs/ca/cert.pem
+    dest: /etc/certs.d/ca.pem
+    mode: 0644
+
+- name: Link ca certificate
+  ansible.builtin.file:
+    src: /etc/certs.d/ca.pem
+    dest: /usr/local/share/ca-certificates/local_cluster.crt
+    state: link
+  register: ca_certificate
+
+- name: Update system certificates
+  when: ca_certificate.changed
+  ansible.builtin.command: update-ca-certificates

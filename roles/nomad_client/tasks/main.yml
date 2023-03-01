@@ -1,102 +1,130 @@
 ---
-
-- name: install nfs-common
-  apt:
+- name: Install nfs-common
+  ansible.builtin.apt:
     name: nfs-common
     state: present
 
-- name: add envoy apt key
-  apt_key:
+- name: Add envoy apt key
+  ansible.builtin.apt_key:
     url: "{{ envoy_gpg_url }}"
     state: present
 
-- name: add envoy apt repository
-  apt_repository:
+- name: Add envoy apt repository
+  ansible.builtin.apt_repository:
     repo: "{{ envoy_repo }}"
     state: present
 
-- name: install envoy
-  apt:
+- name: Install envoy
+  ansible.builtin.apt:
     name: getenvoy-envoy
     state: present
-    update_cache: yes
+    update_cache: true
 
-- name: make / shared
-  command: mount --make-shared /
+- name: Make / shared
+  ansible.builtin.command: mount --make-shared /
 
-- name: make / shared at startup
+- name: Make / shared at startup
   ansible.builtin.cron:
     name: make / shared at startup
     special_time: reboot
     job: mount --make-shared /
 
-- name: add docker apt key
-  apt_key:
+- name: Add docker apt key
+  ansible.builtin.apt_key:
     url: "{{ docker_gpg_url }}"
     state: present
 
-- name: add docker apt repository
-  apt_repository:
+- name: Add docker apt repository
+  ansible.builtin.apt_repository:
     repo: "{{ docker_repo }}"
     state: present
 
-- name: install docker
-  apt:
+- name: Install docker
+  ansible.builtin.apt:
     name: docker-ce
     state: present
-    update_cache: yes
+    update_cache: true
 
-- name: copy consul resolved config
-  copy:
+- name: Copy docker consul resolved config
+  ansible.builtin.copy:
     src: docker-dns.conf
     dest: /etc/systemd/resolved.conf.d/docker.conf
-  register: resolved_config
+    mode: 0644
+  notify: Restart resolved
 
-- name: restart resolved
-  when: resolved_config.changed
-  service:
-    name: systemd-resolved
-    state: restarted
-
-- name: copy docker daemon config
-  copy:
+- name: Copy docker daemon config
+  ansible.builtin.copy:
     src: daemon.json
     dest: /etc/docker/
-  register: docker_daemon_config
+    owner: root
+    mode: 0600
+  notify: Restart docker
 
-- name: restart docker
-  when: docker_daemon_config.changed
-  service:
-    name: docker
-    state: restarted
-
-# - name: install openjdk
-#   apt:
+# - name: Install openjdk
+#   ansible.builtin.apt:
 #     name: openjdk-17-jdk-headless
 #     state: present
 
-- name: create cni plugins directory
-  file:
+- name: Create cni plugins directory
+  ansible.builtin.file:
     path: /opt/cni/bin
     state: directory
+    mode: 0755
 
-- name: install cni plugins
-  unarchive:
+- name: Install cni plugins
+  ansible.builtin.unarchive:
     src: "{{ cni_plugins_url }}"
-    remote_src: yes
+    remote_src: true
     dest: /opt/cni/bin/
     mode: 0755
     creates: /opt/cni/bin/bridge
 
-- name: copy nomad config
-  template:
+- name: Create Consul client Nomad token
+  run_once: true
+  delegate_to: localhost
+  ansible.builtin.import_role:
+    name: consul_token
+  vars:
+    token_file: .tmp/consul_token_nomad_client.txt
+    policy_name: nomad-client
+    policy_rules: |
+      agent_prefix "" {
+        policy = "read"
+      }
+
+      node_prefix "" {
+        policy = "read"
+      }
+
+      service_prefix "" {
+        policy = "write"
+      }
+
+      key_prefix "" {
+        policy = "read"
+      }
+
+- name: Install Nomad
+  ansible.builtin.apt:
+    name: nomad
+    state: present
+    update_cache: true
+
+- name: Copy nomad certs
+  loop: ["cert", "private_key"]
+  ansible.builtin.copy:
+    content: '{{ lookup("file", ".tmp/certs/nomad_client/" + item + ".pem") }}'
+    dest: '/etc/certs.d/{{ item }}.pem'
+    owner: nomad
+    mode: 0600
+  notify: Restart Nomad
+
+- name: Copy nomad config
+  ansible.builtin.template:
     src: nomad.hcl.j2
     dest: /etc/nomad.d/nomad.hcl
-  register: nomad_config
-
-- name: restart nomad
-  when: nomad_config.changed
-  service:
-    name: nomad
-    state: restarted
-    enabled: yes
+    owner: nomad
+    mode: 0600
+  vars:
+    consul_token: '{{ lookup("file", ".tmp/consul_token_nomad_client.txt") }}'
+  notify: Restart Nomad

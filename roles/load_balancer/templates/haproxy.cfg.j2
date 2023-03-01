@@ -9,33 +9,40 @@ frontend http
   bind :80
 
   # acls
-  acl host_consul hdr(host)  -i consul.localhost
-  acl host_nomad hdr(host)   -i nomad.localhost
-  acl host_traefik hdr(host) -i traefik.localhost
+  acl host_consul hdr(host)  -i consul.{{ external_domain }}
+  acl host_vault hdr(host)   -i vault.{{ external_domain }}
+  acl host_nomad hdr(host)   -i nomad.{{ external_domain }}
+  acl host_traefik hdr(host) -i traefik.{{ external_domain }}
 
   # backends
   use_backend consul_dashboard  if host_consul
+  use_backend vault_dashboard   if host_vault
   use_backend nomad_dashboard   if host_nomad
   use_backend traefik_dashboard if host_traefik
 
   default_backend infra_clients
 
 backend consul_dashboard
-  {% for backend in groups["consul_servers"] -%}
-  server {{ hostvars[backend].ansible_hostname }} {{ hostvars[backend].ansible_default_ipv4.address }}:8500
+  {% for host in groups["consul_servers"] -%}
+  server {{ host }} {{ hostvars[host].ansible_host }}:8501 ssl verify none
+  {% endfor %}
+
+backend vault_dashboard
+  {% for host in groups["vault_servers"] -%}
+  server {{ host }} {{ hostvars[host].ansible_host }}:8200 ssl verify none
   {% endfor %}
 
 backend nomad_dashboard
-  {% for backend in groups["nomad_servers"] -%}
-  server {{ hostvars[backend].ansible_hostname }} {{ hostvars[backend].ansible_default_ipv4.address }}:4646
+  {% for host in groups["nomad_servers"] -%}
+  server {{ host }} {{ hostvars[host].ansible_host }}:4646 ssl verify none crt /etc/certs.d/nomad.crt
   {% endfor %}
 
 backend traefik_dashboard
-  {% for backend in groups["nomad_infra_clients"] -%}
-  server {{ hostvars[backend].ansible_hostname }} {{ hostvars[backend].ansible_default_ipv4.address }}:8080
+  {% for host in groups["nomad_infra_clients"] -%}
+  server {{ host }} {{ hostvars[host].ansible_host }}:8080
   {% endfor %}
 
 backend infra_clients
-  {% for backend in groups["nomad_infra_clients"] -%}
-  server {{ hostvars[backend].ansible_hostname }} {{ hostvars[backend].ansible_default_ipv4.address }}:80
+  {% for host in groups["nomad_infra_clients"] -%}
+  server {{ host }} {{ hostvars[host].ansible_host }}:80
   {% endfor %}

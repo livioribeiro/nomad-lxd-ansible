@@ -1,0 +1,17 @@
+---
+- name: Bootstrap Nomad acl
+  ansible.builtin.command:
+    nomad acl bootstrap
+      -address=https://localhost:4646
+      -ca-cert /etc/certs.d/ca.pem
+      -client-cert /etc/certs.d/cert.pem
+      -client-key /etc/certs.d/private_key.pem
+      -json
+  register: acl_bootstrap_result
+  changed_when:
+    - acl_bootstrap_result.rc == 0
+    - '"SecretID" in acl_bootstrap_result.stdout'
+  failed_when:
+    - acl_bootstrap_result.rc != 0
+    - '"ACL bootstrap already done" not in acl_bootstrap_result.stderr'
+  notify: Save Nomad root token

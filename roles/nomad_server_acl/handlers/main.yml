@@ -1,0 +1,8 @@
+---
+- name: Save Nomad root token
+  delegate_to: localhost
+  connection: local
+  ansible.builtin.copy:
+    content: '{{ "SecretID" | extract(acl_bootstrap_result.stdout | from_json) }}'
+    dest: '{{ playbook_dir }}/.tmp/root_token_nomad.txt'
+    mode: 0644

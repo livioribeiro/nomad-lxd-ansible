@@ -1,0 +1,13 @@
+---
+- name: Initialize vault
+  run_once: true
+  ansible.builtin.command:
+    vault operator init -tls-skip-verify -key-shares=3 -key-threshold=2 -format=json
+  register: init_result
+  changed_when:
+    - init_result.rc == 0
+  failed_when:
+    - init_result.rc != 0
+    - '"Vault is already initialized" not in init_result.stderr'
+  notify: Vault initialized
+

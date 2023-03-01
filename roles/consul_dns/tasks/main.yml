@@ -1,17 +1,13 @@
 ---
-- name: create resolved directory
-  file:
+- name: Create resolved directory
+  ansible.builtin.file:
     path: /etc/systemd/resolved.conf.d
     state: directory
+    mode: 0755
 
-- name: copy consul resolved config
-  copy:
+- name: Copy consul resolved config
+  ansible.builtin.copy:
     src: consul.conf
     dest: /etc/systemd/resolved.conf.d/
-  register: resolved_config
-
-- name: restart resolved
-  when: resolved_config.changed
-  service:
-    name: systemd-resolved
-    state: restarted
+    mode: 0644
+  notify: Restart systemd-resolved

@@ -1,14 +1,44 @@
 ---
+- name: Read Consul tokens and keys
+  ansible.builtin.set_fact:
+    consul_management_token: '{{ lookup("file", ".tmp/root_token_consul.txt") }}'
+    consul_encrypt_key: '{{ lookup("file", ".tmp/encrypt_keys/consul.txt") }}'
 
-- name: copy consul config
-  template:
+- name: Install Consul
+  ansible.builtin.apt:
+    name: consul
+    state: present
+
+- name: Define agent token
+  ansible.builtin.set_fact:
+    consul_agent_token: '{{ (inventory_hostname + ".agent.consul") | to_uuid(namespace="6ba7b810-9dad-11d1-80b4-00c04fd430c8") }}'
+
+- name: Create agent token
+  delegate_to: consul-server1
+  ansible.builtin.command:
+    consul acl token create
+      -http-addr https://localhost:8501
+      -ca-file /etc/certs.d/ca.pem
+      -client-cert /etc/certs.d/cert.pem
+      -client-key /etc/certs.d/private_key.pem
+      -token "{{ consul_management_token }}"
+      -description "{{ ansible_hostname }} agent token"
+      -node-identity "{{ ansible_hostname }}:dc1"
+      -secret "{{ consul_agent_token }}"
+  register: create_agent_token
+  failed_when:
+    - create_agent_token.rc != 0
+    - '"SecretID is already in use" not in create_agent_token.stderr'
+  changed_when: create_agent_token.rc == 0
+
+- name: Copy Consul config
+  ansible.builtin.template:
     src: consul.hcl.j2
     dest: /etc/consul.d/consul.hcl
-  register: consul_config
+    owner: consul
+    mode: 0600
+  notify: Restart Consul
 
-- name: restart consul
-  when: consul_config.changed
-  service:
-    name: consul
-    state: restarted
-    enabled: yes
+- name: Setup Consul DNS
+  ansible.builtin.import_role:
+    name: consul_dns

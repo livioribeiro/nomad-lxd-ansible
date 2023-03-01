@@ -1,24 +1,64 @@
-data_dir       = "/var/consul"
+data_dir       = "/opt/consul"
 server         = true
 advertise_addr = "{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
 client_addr    = "127.0.0.1 {{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}"
+primary_datacenter = "dc1"
 
-{% if ansible_hostname == consul_server_primary -%}
 bootstrap_expect = 3
-{% else -%}
-retry_join = [ "{{ consul_server_primary }}.lxd" ]
-{% endif %}
+retry_join = [
+{% for host in groups["consul_servers"] -%}
+  "{{ hostvars[host].ansible_host }}",
+{% endfor -%}
+]
 
-ui_config {
-  enabled          = true
-  metrics_provider = "prometheus"
-  metrics_proxy {
-    base_url = "http://prometheus.service.consul:9090"
+tls {
+  defaults {
+    ca_file         = "/etc/certs.d/ca.pem"
+    cert_file       = "/etc/certs.d/cert.pem"
+    key_file        = "/etc/certs.d/private_key.pem"
+
+    verify_incoming = true
+    verify_outgoing = true
   }
+
+  internal_rpc {
+    verify_server_hostname = true
+  }
+}
+
+auto_encrypt {
+  allow_tls = true
+}
+
+encrypt = "{{ consul_encrypt_key }}"
+
+ports {
+  https    = 8501
+  grpc     = 8502
+  grpc_tls = 8503
 }
 
 connect {
   enabled = true
+}
+
+acl {
+  enabled                  = true
+  default_policy           = "deny"
+  enable_token_persistence = true
+
+  tokens {
+    initial_management = "{{ consul_management_token }}"
+    agent              = "{{ consul_agent_token }}"
+  }
+}
+
+ui_config {
+  enabled          = true
+  # metrics_provider = "prometheus"
+  # metrics_proxy {
+  #   base_url = "http://prometheus.service.consul:9090"
+  # }
 }
 
 telemetry {
@@ -33,8 +73,7 @@ config_entries {
       Kind = "proxy-defaults"
       Name = "global"
       Config {
-        # envoy listens by default on port 9102 for prometheus metrics
-        envoy_prometheus_bind_addr = "0.0.0.0:9102"
+        envoy_statsd_url = "udp://172.17.0.1:9125"
       }
     }
   ]

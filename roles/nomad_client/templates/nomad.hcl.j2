@@ -1,9 +1,42 @@
-data_dir   = "/var/nomad"
+data_dir   = "/opt/nomad/data"
 datacenter = "{{ datacenter }}"
 
 client {
   enabled           = true
   network_interface = "eth0"
+
+  host_volume "docker-socket" {
+    path      = "/run/docker.sock"
+    read_only = true
+  }
+}
+
+acl {
+  enabled = true
+}
+
+tls {
+  http      = true
+  rpc       = true
+
+  ca_file   = "/etc/certs.d/ca.pem"
+  cert_file = "/etc/certs.d/cert.pem"
+  key_file  = "/etc/certs.d/private_key.pem"
+
+  verify_server_hostname = true
+  verify_https_client    = true
+}
+
+consul {
+  token = "{{ consul_token }}"
+}
+
+vault {
+  enabled          = true
+  address          = "https://vault.service.consul:8200"
+  ca_path          = "/etc/certs.d/ca.pem"
+  cert_file        = "/etc/certs.d/cert.pem"
+  key_file         = "/etc/certs.d/private_key.pem"
 }
 
 telemetry {
@@ -16,8 +49,6 @@ telemetry {
 plugin "docker" {
   config {
     allow_privileged = true
-    volumes {
-      enabled = true
-    }
+    extra_labels = ["job_name", "job_id", "task_group_name", "task_name", "namespace", "node_name", "node_id"]
   }
 }

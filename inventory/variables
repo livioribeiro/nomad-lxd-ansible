@@ -1,29 +1,25 @@
 [all:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=ubuntu
-ansible_ssh_private_key_file=./ssh/id_rsa
-ansible_ssh_common_args=-o StrictHostKeyChecking=no
+gateway_address=10.99.0.1
 
 ubuntu_version=jammy
-consul_server_primary=consul-server1
-nomad_server_primary=nomad-server1
-proxy_route_suffix=localhost
+external_domain=nomad.localhost
+apps_subdomain=apps
 
 hashicorp_gpg_url=https://apt.releases.hashicorp.com/gpg
 hashicorp_repo=deb [arch=amd64] https://apt.releases.hashicorp.com {{ ubuntu_version }} main
 
-[nomad_infra_clients]
+[cluster:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=ubuntu
+ansible_ssh_private_key_file=.tmp/ssh/id_rsa
+ansible_ssh_common_args=-o StrictHostKeyChecking=no
+ansible_become=true
+
 [nomad_infra_clients:vars]
 datacenter=infra
 
-[nomad_apps_clients]
 [nomad_apps_clients:vars]
 datacenter=apps
-
-[nomad_clients]
-[nomad_clients:children]
-nomad_infra_clients
-nomad_apps_clients
 
 [nomad_clients:vars]
 cni_plugins_version=1.2.0

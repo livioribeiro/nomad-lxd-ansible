@@ -1,68 +1,146 @@
 ---
-- name: servers deployment
+- name: Generate certs
   hosts: localhost
-  # run this task in the host
+  connection: local
+  roles:
+    - certs
+
+- name: Generate tokens and keys
+  hosts: localhost
   connection: local
   tasks:
-    - ansible.builtin.import_tasks: servers.yml
+    - name: Create keys directory
+      ansible.builtin.file:
+        path: '.tmp/encrypt_keys'
+        state: directory
+    - name: Create Consul management token
+      ansible.builtin.copy:
+        content: '{{ ("management.consul." + external_domain) | to_uuid(namespace="6ba7b810-9dad-11d1-80b4-00c04fd430c8") }}'
+        dest: '.tmp/root_token_consul.txt'
+        mode: 0644
+    - name: Create Consul encrypt key
+      block:
+        - name: Check Consul encrypt key
+          ansible.builtin.stat:
+            path: '.tmp/encrypt_keys/consul.txt'
+          register: stat_consul_encrypt_key
+        - name: Generate Consul encrypt key
+          when: not stat_consul_encrypt_key.stat.exists
+          ansible.builtin.copy:
+            content: '{{ lookup("community.general.random_string", base64=True, length=32) }}'
+            dest: '.tmp/encrypt_keys/consul.txt'
+            mode: 0644
+    - name: Create Nomad encrypt key
+      block:
+        - name: Check Nomad encrypt key
+          ansible.builtin.stat:
+            path: '.tmp/encrypt_keys/consul.txt'
+          register: stat_nomad_encrypt_key
+        - name: Generate Nomad encrypt key
+          when: not stat_nomad_encrypt_key.stat.exists
+          ansible.builtin.copy:
+            content: '{{ lookup("community.general.random_string", base64=True, length=32) }}'
+            dest: '.tmp/encrypt_keys/nomad.txt'
+            mode: 0644
 
-- name: install consul service
-  hosts: consul_servers:nomad_servers:nomad_clients
+- name: Servers deployment
+  hosts: localhost
+  connection: local
+  tasks:
+    - ansible.builtin.import_tasks: containers.yml
+
+- name: Wait for servers to be ready
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Wait for servers to be ready
+      ansible.builtin.wait_for:
+        timeout: 30
+
+- name: Add CA cert
+  hosts: all
+  roles:
+    - ca_cert
+
+- name: Install Hashicorp apt repository
+  hosts: consul_servers:vault_servers:nomad_servers:nomad_clients
   roles:
     - hashicorp_apt
-    - consul_service
 
-- name: setup consul servers
+- name: Setup Consul servers
   hosts: consul_servers
   roles:
     - consul_server
     - consul_dns
 
-- name: setup consul clients
-  hosts: nomad_servers:nomad_clients
+- name: Initialize Consul acl
+  hosts: consul_servers
+  roles:
+    - consul_server_acl
+
+- name: Setup Vault servers
+  hosts: vault_servers
   roles:
     - consul_client
-    - consul_dns
+    - vault_server
 
-# - name: setup vault
-#   hosts: vault_servers
-#   roles:
-#     - vault_server
-#     - consul_dns
+- name: Initialize Vault
+  hosts: vault-server1
+  roles:
+    - vault_server_init
 
-- name: setup nfs server
+- name: Unseal Vault
+  hosts: vault_servers
+  roles:
+    - vault_server_unseal
+
+- name: Setup Nomad servers
+  hosts: nomad_servers
+  roles:
+    - consul_client
+    - nomad_server
+
+- name: Initialize Nomad acl
+  hosts: nomad-server1
+  roles:
+    - nomad_server_acl
+
+- name: Setup Nomad clients
+  hosts: nomad_clients
+  roles:
+    - consul_client
+    - nomad_client
+
+- name: Setup NFS Server
   hosts: nfs-server
   roles:
     - nfs_server
 
-- name: install nomad service
-  hosts: nomad_servers:nomad_clients
-  roles:
-    - nomad_service
-
-- name: setup nomad server
-  hosts: nomad_servers
-  roles:
-    - nomad_server
-
-- name: setup nomad client
-  hosts: nomad_clients
-  roles:
-    - nomad_client
-
-- name: setup load balancer
+- name: Setup load balancer
   hosts: load-balancer
   roles:
     - load_balancer
 
-- name: setup nomad jobs
+- name: Setup nomad jobs
   hosts: localhost
   connection: local
   tasks:
-    - name: execute terraform
+    - name: Execute terraform
       ansible.builtin.terraform:
         project_path: ./terraform
         state: present
         force_init: true
         variables:
-          nomad_address: "http://{{ hostvars['nomad-server1'].ansible_default_ipv4.address }}:4646"
+          nfs_server_host: '{{ hostvars["nfs-server"].ansible_host }}'
+          external_domain: '{{ external_domain }}'
+          apps_subdomain: '{{ apps_subdomain }}'
+          ca_cert: '{{ lookup("file", ".tmp/certs/ca/cert.pem") }}'
+          consul_address: '{{ hostvars["consul-server1"].ansible_host }}:8501'
+          consul_scheme: https
+          consul_token: '{{ lookup("file", ".tmp/root_token_consul.txt") }}'
+          nomad_address: 'https://{{ hostvars["nomad-server1"].ansible_host}}:4646'
+          nomad_secret_id: '{{ lookup("file", ".tmp/root_token_nomad.txt") }}'
+          client_cert: '{{ lookup("file", ".tmp/certs/nomad_client/cert.pem") }}'
+          client_key: '{{ lookup("file", ".tmp/certs/nomad_client/private_key.pem") }}'
+          nomad_autoscaler_cert: '{{ lookup("file", ".tmp/certs/nomad_client/cert.pem") }}'
+          nomad_autoscaler_key: '{{ lookup("file", ".tmp/certs/nomad_client/private_key.pem") }}'
