@@ -3,7 +3,7 @@ resource "nomad_namespace" "system_autoscaling" {
 }
 
 resource "nomad_acl_policy" "nomad_autoscaler" {
-  name = "nomad-autoscaler"
+  name      = "nomad-autoscaler"
   rules_hcl = <<-EOT
     namespace "*" {
       policy = "write"
@@ -12,8 +12,8 @@ resource "nomad_acl_policy" "nomad_autoscaler" {
 }
 
 resource "nomad_acl_token" "nomad_autoscaler" {
-  name = "nomad-autoscaler"
-  type = "client"
+  name     = "nomad-autoscaler"
+  type     = "client"
   policies = [nomad_acl_policy.nomad_autoscaler.name]
 }
 

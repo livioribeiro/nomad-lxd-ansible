@@ -13,7 +13,7 @@ variable "volume_name" {
   default = "docker-registry-data"
 }
 
-job "docker-registry" {
+job "docker-hub-mirror" {
   datacenters = ["infra", "apps"]
   type        = "service"
   namespace   = var.namespace
@@ -26,42 +26,14 @@ job "docker-registry" {
     }
 
     network {
-      mode = "bridge"
-
       port "docker" {
         static = 5000
       }
-
-      port "docker-debug" {
-        to = 5001
-      }
     }
 
     service {
-      name = "docker-registry"
+      name = "docker-hub-mirror"
       port = "docker"
-
-      connect {
-        sidecar_service {
-          proxy {
-            upstreams {
-              destination_name = "docker-registry-redis"
-              local_bind_port  = 6379
-            }
-          }
-        }
-        sidecar_task {
-          resources {
-            cpu    = 50
-            memory = 32
-          }
-        }
-      }
-    }
-
-    service {
-      name = "docker-registry-debug"
-      port = "docker-debug"
     }
 
     volume "data" {
@@ -76,12 +48,9 @@ job "docker-registry" {
       driver = "docker"
 
       config {
-        image        = "registry:${var.version}"
-        ports        = ["docker"]
-
-        volumes = [
-          "local/config.yml:/etc/docker/registry/config.yml",
-        ]
+        image = "registry:${var.version}"
+        ports = ["docker"]
+        args = ["local/config.yml"]
       }
 
       volume_mount {
@@ -90,8 +59,8 @@ job "docker-registry" {
       }
 
       resources {
-        cpu    = 100
-        memory = 128
+        cpu    = 200
+        memory = 512
       }
 
       template {
@@ -105,48 +74,14 @@ job "docker-registry" {
             filesystem:
               rootdirectory: /var/lib/registry
               maxthreads: 100
-          cache:
-            blobdescriptor: redis
-            blobdescriptorsize: 10000
-          redis:
-            addr: {{ env "NOMAD_UPSTREAM_ADDR_docker_registry_redis" }}
+            delete:
+              enabled: true
+            cache:
+              blobdescriptor: inmemory
+              blobdescriptorsize: 10000
           proxy:
             remoteurl: https://registry-1.docker.io
         EOT
-      }
-    }
-  }
-
-  group "cache" {
-    network {
-      mode = "bridge"
-    }
-
-    service {
-      port = "6379"
-
-      connect {
-        sidecar_service {}
-
-        sidecar_task {
-          resources {
-            cpu    = 50
-            memory = 32
-          }
-        }
-      }
-    }
-
-    task "redis" {
-      driver = "docker"
-
-      config {
-        image = "redis:7.0-alpine"
-      }
-
-      resources {
-        cpu = 100
-        memory = 128
       }
     }
   }

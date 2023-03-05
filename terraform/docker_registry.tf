@@ -12,8 +12,8 @@ resource "nomad_external_volume" "docker_registry_data" {
   volume_id    = "docker-registry-data"
   name         = "docker-registry-data"
   namespace    = nomad_namespace.system_registry.name
-  capacity_min = "2GiB"
-  capacity_max = "3GiB"
+  capacity_min = "12GiB"
+  capacity_max = "16GiB"
 
   capability {
     access_mode     = "single-node-writer"
@@ -23,7 +23,7 @@ resource "nomad_external_volume" "docker_registry_data" {
 
 resource "nomad_job" "docker-registry" {
   jobspec = file("${path.module}/jobs/docker-registry.nomad.hcl")
-  detach = false
+  detach  = false
 
   hcl2 {
     enabled = true

@@ -56,10 +56,6 @@ job "promtail" {
         image = "grafana/promtail:${var.version}"
         ports = ["http"]
         args = ["-config.file=local/promtail.yaml"]
-
-        // volumes = [
-        //   "/var/run/docker.sock:/var/run/docker.sock"
-        // ]
       }
 
       volume_mount {
