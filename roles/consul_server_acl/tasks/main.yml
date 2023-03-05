@@ -37,3 +37,48 @@
     - '"SecretID is already in use" not in create_agent_token.stderr'
   retries: 3
   delay: 10
+
+- name: Check Consul annonymous policy
+  run_once: true
+  ansible.builtin.command:
+    consul acl policy read
+      -token {{ consul_management_token }}
+      -name annonymous-dns
+      -format json
+  register: check_consul_policy
+  changed_when: false
+  failed_when: false
+
+- name: Create Consul anonymous policy
+  when: check_consul_policy.stdout == "null"
+  run_once: true
+  ansible.builtin.command:
+    stdin: |
+      # allow access to metrics
+      agent_prefix "consul-server" {
+        policy = "read"
+      }
+
+      # allow dns queries
+      node_prefix "" {
+        policy = "read"
+      }
+
+      service_prefix "" {
+        policy = "read"
+      }
+    cmd:
+      consul acl policy create
+        -token {{ consul_management_token }}
+        -name annonymous-dns
+        -format json
+        -rules -
+
+- name: Associate annonymous policy with annonymous token
+  run_once: true
+  ansible.builtin.command:
+    consul acl token update
+      -token {{ consul_management_token }}
+      -policy-name annonymous-dns
+      -accessor-id 00000000-0000-0000-0000-000000000002
+      -format json

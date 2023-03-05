@@ -51,13 +51,13 @@
 - name: Check Vault Nomad policy
   run_once: true
   delegate_to: vault-server1
-  ansible.builtin.command:
+  ansible.builtin.shell:
     VAULT_TOKEN={{ vault_root_token }} vault policy read -tls-skip-verify nomad-server
-  failed_when: false
   register: check_vault_token
+  failed_when: 'check_vault_token.rc not in [0, 2]'
 
 - name: Create Vault Nomad policy
-  when: check_vault_token.rc != 0
+  when: check_vault_token.rc == 2
   run_once: true
   delegate_to: vault-server1
   ansible.builtin.shell:
@@ -111,8 +111,9 @@
   delegate_to: vault-server1
   ansible.builtin.shell:
     VAULT_TOKEN={{ vault_root_token }} vault read -tls-skip-verify /auth/token/roles/nomad-cluster
-  failed_when: false
   register: check_vault_token_role
+  changed_when: false
+  failed_when: false
 
 - name: Create Vault Nomad token role
   when: check_vault_token_role.rc != 0

@@ -16,12 +16,15 @@
   run_once: true
   delegate_to: consul-server1
   ansible.builtin.command:
-    consul acl policy read -token {{ consul_management_token }} -name {{ policy_name }} -format json
-  failed_when: false
+    consul acl policy read
+      -token {{ consul_management_token }}
+      -name {{ policy_name }}
+      -format json
   register: check_consul_policy
+  changed_when: false
 
 - name: 'Create Consul acl policy {{ ansible_hostname }}'
-  when: check_consul_policy.rc != 0 or check_consul_policy.stdout == "null"
+  when: check_consul_policy.stdout == "null"
   delegate_to: consul-server1
   run_once: true
   ansible.builtin.command:
@@ -46,10 +49,14 @@
       -accessor-id {{ accessor_id }}
       -format json
   register: check_consul_token
-  failed_when: false
+  changed_when: false
+  failed_when:
+    - check_consul_token.rc != 0
+    - '"token does not exist" not in check_consul_token.stderr'
 
 - name: 'Create Consul token {{ ansible_hostname }}'
-  when: check_consul_token.rc != 0
+  when:
+    - '"token does not exist" in check_consul_token.stderr'
   block:
     - name: 'Create Consul token {{ ansible_hostname }}'
       delegate_to: consul-server1
