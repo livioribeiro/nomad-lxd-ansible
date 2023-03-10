@@ -47,10 +47,12 @@
       -format json
   register: check_consul_policy
   changed_when: false
-  failed_when: false
+  failed_when:
+    - check_consul_policy.rc != 0
+    - '"policy not found" not in check_consul_policy.stderr'
 
 - name: Create Consul anonymous policy
-  when: check_consul_policy.stdout == "null"
+  when: '"policy not found" in check_consul_policy.stderr'
   run_once: true
   ansible.builtin.command:
     stdin: |

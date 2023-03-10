@@ -2,15 +2,15 @@ resource "nomad_namespace" "system_registry" {
   name = "system-registry"
 }
 
-resource "nomad_external_volume" "docker_registry_data" {
+resource "nomad_external_volume" "docker_hub_proxy_data" {
   depends_on = [
     data.nomad_plugin.nfs
   ]
 
   type         = "csi"
   plugin_id    = "nfs"
-  volume_id    = "docker-registry-data"
-  name         = "docker-registry-data"
+  volume_id    = "docker-hub-proxy-data"
+  name         = "docker-hub-proxy-data"
   namespace    = nomad_namespace.system_registry.name
   capacity_min = "12GiB"
   capacity_max = "16GiB"
@@ -21,7 +21,7 @@ resource "nomad_external_volume" "docker_registry_data" {
   }
 }
 
-resource "nomad_job" "docker-registry" {
+resource "nomad_job" "docker_registry" {
   jobspec = file("${path.module}/jobs/docker-registry.nomad.hcl")
   detach  = false
 
@@ -29,7 +29,7 @@ resource "nomad_job" "docker-registry" {
     enabled = true
     vars = {
       namespace   = nomad_namespace.system_registry.name
-      volume_name = nomad_external_volume.docker_registry_data.name
+      volume_name = nomad_external_volume.docker_hub_proxy_data.name
     }
   }
 }

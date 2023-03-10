@@ -49,7 +49,7 @@
   ansible.builtin.copy:
     src: docker-dns.conf
     dest: /etc/systemd/resolved.conf.d/docker.conf
-    mode: 0644
+    mode: "0644"
   notify: Restart resolved
 
 - name: Copy docker daemon config
@@ -57,7 +57,7 @@
     src: daemon.json
     dest: /etc/docker/
     owner: root
-    mode: 0600
+    mode: "0600"
   notify: Restart docker
 
 # - name: Install openjdk
@@ -69,14 +69,14 @@
   ansible.builtin.file:
     path: /opt/cni/bin
     state: directory
-    mode: 0755
+    mode: "0755"
 
 - name: Install cni plugins
   ansible.builtin.unarchive:
     src: "{{ cni_plugins_url }}"
     remote_src: true
     dest: /opt/cni/bin/
-    mode: 0755
+    mode: "0755"
     creates: /opt/cni/bin/bridge
 
 - name: Create Consul client Nomad token
@@ -116,7 +116,7 @@
     content: '{{ lookup("file", ".tmp/certs/nomad_client/" + item + ".pem") }}'
     dest: '/etc/certs.d/{{ item }}.pem'
     owner: nomad
-    mode: 0600
+    mode: "0600"
   notify: Restart Nomad
 
 - name: Copy nomad config
@@ -124,7 +124,7 @@
     src: nomad.hcl.j2
     dest: /etc/nomad.d/nomad.hcl
     owner: nomad
-    mode: 0600
+    mode: "0600"
   vars:
     consul_token: '{{ lookup("file", ".tmp/consul_token_nomad_client.txt") }}'
   notify: Restart Nomad

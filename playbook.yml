@@ -17,7 +17,7 @@
       ansible.builtin.copy:
         content: '{{ ("management.consul." + external_domain) | to_uuid(namespace="6ba7b810-9dad-11d1-80b4-00c04fd430c8") }}'
         dest: '.tmp/root_token_consul.txt'
-        mode: 0644
+        mode: "0644"
     - name: Create Consul encrypt key
       block:
         - name: Check Consul encrypt key
@@ -29,19 +29,19 @@
           ansible.builtin.copy:
             content: '{{ lookup("community.general.random_string", base64=True, length=32) }}'
             dest: '.tmp/encrypt_keys/consul.txt'
-            mode: 0644
+            mode: "0644"
     - name: Create Nomad encrypt key
       block:
         - name: Check Nomad encrypt key
           ansible.builtin.stat:
-            path: '.tmp/encrypt_keys/consul.txt'
+            path: '.tmp/encrypt_keys/nomad.txt'
           register: stat_nomad_encrypt_key
         - name: Generate Nomad encrypt key
           when: not stat_nomad_encrypt_key.stat.exists
           ansible.builtin.copy:
             content: '{{ lookup("community.general.random_string", base64=True, length=32) }}'
             dest: '.tmp/encrypt_keys/nomad.txt'
-            mode: 0644
+            mode: "0644"
 
 - name: Servers deployment
   hosts: localhost
@@ -126,7 +126,7 @@
   connection: local
   tasks:
     - name: Execute terraform
-      ansible.builtin.terraform:
+      community.general.terraform:
         project_path: ./terraform
         state: present
         force_init: true
@@ -144,3 +144,5 @@
           client_key: '{{ lookup("file", ".tmp/certs/nomad_client/private_key.pem") }}'
           nomad_autoscaler_cert: '{{ lookup("file", ".tmp/certs/nomad_client/cert.pem") }}'
           nomad_autoscaler_key: '{{ lookup("file", ".tmp/certs/nomad_client/private_key.pem") }}'
+          vault_address: 'https://{{ hostvars["vault-server1"].ansible_host }}:8200'
+          vault_token: '{{ lookup("file", ".tmp/root_token_vault.txt") }}'

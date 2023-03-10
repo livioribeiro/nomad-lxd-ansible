@@ -9,13 +9,13 @@
   ansible.builtin.file:
     path: /srv/nomad
     state: directory
-    mode: 0777
+    mode: "0777"
 
 - name: Copy nfs config
   ansible.builtin.copy:
     src: exports
     dest: /etc/exports
-    mode: 0644
+    mode: "0644"
   notify: Apply exports
 
 - name: Start nfs server

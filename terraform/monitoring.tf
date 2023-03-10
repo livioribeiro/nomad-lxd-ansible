@@ -43,6 +43,8 @@ resource "nomad_namespace" "system_monitoring" {
 }
 
 resource "nomad_job" "prometheus" {
+  depends_on = [nomad_job.docker_registry]
+
   jobspec = file("${path.module}/jobs/prometheus.nomad.hcl")
   # detach = false
 
@@ -56,6 +58,8 @@ resource "nomad_job" "prometheus" {
 }
 
 resource "nomad_job" "statsd_exporter" {
+  depends_on = [nomad_job.docker_registry]
+
   jobspec = file("${path.module}/jobs/statsd-exporter.nomad.hcl")
   # detach = false
 

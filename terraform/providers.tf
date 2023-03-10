@@ -9,6 +9,11 @@ terraform {
       source  = "hashicorp/nomad"
       version = "~>1.4"
     }
+
+    vault = {
+      source = "hashicorp/vault"
+      version = "3.13.0"
+    }
   }
 }
 
@@ -27,4 +32,10 @@ provider "nomad" {
   ca_pem    = var.ca_cert
   cert_pem  = var.client_cert
   key_pem   = var.client_key
+}
+
+provider "vault" {
+  address      = var.vault_address
+  token        = var.vault_token
+  ca_cert_file = "../.tmp/certs/ca/cert.pem"
 }

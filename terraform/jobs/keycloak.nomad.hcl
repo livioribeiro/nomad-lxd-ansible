@@ -1,6 +1,6 @@
 variable "version" {
   type    = string
-  default = "20.0"
+  default = "21.0"
 }
 
 variable "postgres_version" {
@@ -16,6 +16,14 @@ variable "namespace" {
 variable "volume_name" {
   type    = string
   default = "sso-database-data"
+}
+
+variable "external_domain" {
+  type = string
+}
+
+variable "apps_subdomain" {
+  type = string
 }
 
 job "sso" {
@@ -37,7 +45,9 @@ job "sso" {
     service {
       name = "sso"
       port = "http"
-      tags = ["traefik.enable=true"]
+      tags = [
+        "traefik.enable=true"
+      ]
 
       check {
         name     = "Healthiness Check"
@@ -100,9 +110,9 @@ job "sso" {
         KC_HEALTH_ENABLED        = "true"
         KC_HTTP_ENABLED          = "true"
         KC_PROXY                 = "edge"
-        KC_HOSTNAME_STRICT_HTTPS = "false"
+        KC_HOSTNAME_STRICT_HTTPS = "true"
         KC_LOG_LEVEL             = "WARN,io.quarkus:INFO,org.infinispan.CONTAINER:INFO"
-        KC_HOSTNAME              = "sso.apps.localhost"
+        KC_HOSTNAME              = "sso.${var.apps_subdomain}.${var.external_domain}"
         KC_DB                    = "postgres"
         KC_DB_URL_HOST           = "${NOMAD_UPSTREAM_IP_sso_database}"
         KC_DB_URL_PORT           = "${NOMAD_UPSTREAM_PORT_sso_database}"

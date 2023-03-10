@@ -7,6 +7,8 @@ defaults
 
 frontend http
   bind :80
+  bind :443 ssl crt /etc/certs.d/haproxy.pem
+  http-request set-header x-forwarded-proto %[ssl_fc,iif(https,http)]
 
   # acls
   acl host_consul hdr(host)  -i consul.{{ external_domain }}

@@ -2,7 +2,8 @@
 gateway_address=10.99.0.1
 
 ubuntu_version=jammy
-external_domain=nomad.localhost
+# external_domain=nomad.localhost
+external_domain=10-99-0-1.nip.io
 apps_subdomain=apps
 
 hashicorp_gpg_url=https://apt.releases.hashicorp.com/gpg

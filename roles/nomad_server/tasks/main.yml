@@ -154,7 +154,7 @@
     content: '{{ "auth" | extract(vault_nomad_token.stdout | from_json, morekeys="client_token") }}'
     dest: /etc/nomad.d/vault_token.txt
     owner: nomad
-    mode: 0600
+    mode: "0600"
 
 - name: Read Vault Nomad token
   ansible.builtin.slurp:
@@ -170,7 +170,7 @@
     src: nomad.hcl.j2
     dest: /etc/nomad.d/nomad.hcl
     owner: nomad
-    mode: 0644
+    mode: "0644"
   vars:
     consul_token: '{{ read.consul_token.content | b64decode }}'
     vault_token: '{{ read_vault_nomad_token.content | b64decode }}'

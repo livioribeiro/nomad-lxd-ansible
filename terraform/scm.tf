@@ -47,6 +47,8 @@ resource "nomad_external_volume" "scm_database_data" {
 }
 
 resource "nomad_job" "scm" {
+  depends_on = [nomad_job.docker_registry]
+
   jobspec = file("${path.module}/jobs/gitea.nomad.hcl")
   # detach = false
 

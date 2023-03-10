@@ -3,11 +3,11 @@
   ansible.builtin.file:
     path: /etc/systemd/resolved.conf.d
     state: directory
-    mode: 0755
+    mode: "0755"
 
 - name: Copy consul resolved config
   ansible.builtin.copy:
     src: consul.conf
     dest: /etc/systemd/resolved.conf.d/
-    mode: 0644
+    mode: "0644"
   notify: Restart systemd-resolved

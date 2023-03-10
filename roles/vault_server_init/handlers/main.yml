@@ -7,7 +7,7 @@
   ansible.builtin.copy:
     content: '{{ init_result.stdout }}'
     dest: '{{ playbook_dir }}/.tmp/vault_init.json'
-    mode: 0644
+    mode: "0644"
 
 - name: Save vault root token
   listen: Vault initialized
@@ -17,4 +17,4 @@
   ansible.builtin.copy:
     content: '{{ "root_token" | extract(init_result.stdout | from_json) }}'
     dest: '{{ playbook_dir }}/.tmp/root_token_vault.txt'
-    mode: 0644
+    mode: "0644"

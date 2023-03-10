@@ -39,7 +39,9 @@ resource "nomad_namespace" "system_gateway" {
 }
 
 resource "nomad_job" "proxy" {
-  jobspec = file("${path.module}/jobs/proxy.nomad.hcl")
+  depends_on = [nomad_job.docker_registry]
+
+  jobspec = file("${path.module}/jobs/traefik.nomad.hcl")
   # detach = false
 
   hcl2 {

@@ -67,7 +67,7 @@
                 - 9.9.9.9
                 - 149.112.112.112
 
-- name: create nomad clients
+- name: Create nomad clients
   loop: '{{ groups["nomad_infra_clients"] + groups["nomad_apps_clients"] }}'
   community.general.lxd_container:
     name: '{{ hostvars[item].inventory_hostname }}'
@@ -157,3 +157,7 @@
         type: proxy
         listen: tcp:0.0.0.0:80
         connect: tcp:127.0.0.1:80
+      map_port_443:
+        type: proxy
+        listen: tcp:0.0.0.0:443
+        connect: tcp:127.0.0.1:443

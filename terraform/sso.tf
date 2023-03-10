@@ -22,14 +22,18 @@
 # }
 
 # resource "nomad_job" "sso" {
+#   depends_on = [nomad_job.docker_registry]
+
 #   jobspec = file("${path.module}/jobs/keycloak.nomad.hcl")
 #   # detach = false
 
 #   hcl2 {
 #     enabled = true
 #     vars = {
-#       namespace   = nomad_namespace.system_sso.name
-#       volume_name = nomad_external_volume.sso_database_data.name
+#       namespace       = nomad_namespace.system_sso.name
+#       volume_name     = nomad_external_volume.sso_database_data.name
+#       external_domain = var.external_domain
+#       apps_subdomain  = var.apps_subdomain
 #     }
 #   }
 # }

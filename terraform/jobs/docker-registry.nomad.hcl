@@ -10,7 +10,7 @@ variable "namespace" {
 
 variable "volume_name" {
   type    = string
-  default = "docker-registry-data"
+  default = "docker-hub-proxy-data"
 }
 
 job "docker-hub-mirror" {

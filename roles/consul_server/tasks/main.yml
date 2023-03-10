@@ -36,5 +36,5 @@
     src: consul.hcl.j2
     dest: /etc/consul.d/consul.hcl
     owner: consul
-    mode: 0600
+    mode: "0600"
   notify: Restart Consul

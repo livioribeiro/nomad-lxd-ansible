@@ -34,6 +34,14 @@ variable "nomad_secret_id" {
   type = string
 }
 
+variable "vault_address" {
+  type = string
+}
+
+variable "vault_token" {
+  type = string
+}
+
 variable "client_cert" {
   type = string
 }
