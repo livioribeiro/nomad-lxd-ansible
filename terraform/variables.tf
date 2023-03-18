@@ -50,10 +50,10 @@ variable "client_key" {
   type = string
 }
 
-variable "nomad_autoscaler_cert" {
-  type = string
-}
+# variable "nomad_autoscaler_cert" {
+#   type = string
+# }
 
-variable "nomad_autoscaler_key" {
-  type = string
-}
+# variable "nomad_autoscaler_key" {
+#   type = string
+# }

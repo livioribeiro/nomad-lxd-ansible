@@ -7,8 +7,10 @@
 
 - name: Create Vault certs
   ansible.builtin.import_role:
-    name: certs_server
+    name: certs_ownca
   vars:
+    agent_name: vault
+    certs_dir: /opt/vault/tls
     owner: vault
     alt_names:
       - IP:127.0.0.1
@@ -19,26 +21,14 @@
       - DNS:standby.vault.service.consul
       - 'DNS:vault.{{ external_domain }}'
 
-- name: Copy Vault cert with private key cert combined
-  ansible.builtin.shell:
-    cmd: cat /etc/certs.d/private_key.pem /etc/certs.d/cert.pem > /etc/certs.d/cert_combined.pem
-    creates: /etc/certs.d/cert_combined.pem
-
-- name: Create Consul Vault token
-  ansible.builtin.import_role:
-    name: consul_token
-  vars:
-    token_file: /etc/vault.d/consul_token.txt
-    policy_name: vault-server
-    policy_rules: |
-      service "vault" {
-        policy = "write"
-      }
-
-- name: Read Consul Vault token
-  ansible.builtin.slurp:
-    path: /etc/vault.d/consul_token.txt
-  register: read_consul_token
+- name: Copy Vault CA cert
+  ansible.builtin.copy:
+    remote_src: true
+    src: /etc/certs.d/ca.crt
+    dest: /opt/vault/tls/ca.crt
+    owner: vault
+    group: vault
+    mode: "0600"
 
 - name: Copy Vault config
   ansible.builtin.template:
@@ -46,6 +36,4 @@
     dest: /etc/vault.d/vault.hcl
     owner: vault
     mode: "0600"
-  vars:
-    consul_token: '{{ read_consul_token.content | b64decode }}'
   notify: Restart Vault

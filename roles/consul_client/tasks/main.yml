@@ -3,6 +3,7 @@
   ansible.builtin.set_fact:
     consul_management_token: '{{ lookup("file", ".tmp/root_token_consul.txt") }}'
     consul_encrypt_key: '{{ lookup("file", ".tmp/encrypt_keys/consul.txt") }}'
+    vault_token: '{{ lookup("file", ".tmp/root_token_vault.txt") }}'
 
 - name: Install Consul
   ansible.builtin.apt:
@@ -17,10 +18,6 @@
   delegate_to: consul-server1
   ansible.builtin.command:
     consul acl token create
-      -http-addr https://localhost:8501
-      -ca-file /etc/certs.d/ca.pem
-      -client-cert /etc/certs.d/cert.pem
-      -client-key /etc/certs.d/private_key.pem
       -token "{{ consul_management_token }}"
       -description "{{ ansible_hostname }} agent token"
       -node-identity "{{ ansible_hostname }}:dc1"
@@ -30,6 +27,27 @@
     - create_agent_token.rc != 0
     - '"SecretID is already in use" not in create_agent_token.stderr'
   changed_when: create_agent_token.rc == 0
+
+- name: Create certs directory
+  ansible.builtin.file:
+    path: /opt/consul/tls
+    state: directory
+    owner: consul
+    group: consul
+    mode: "0700"
+
+- name: Fetch CA cert
+  ansible.builtin.get_url:
+    url: 'https://{{ hostvars["vault-server1"].ansible_host }}:8200/v1/pki/issuer/default/pem'
+    dest: /opt/consul/tls/ca.crt
+    validate_certs: false
+    owner: consul
+    group: consul
+    mode: "0600"
+  register: fetch_ca_cert
+  retries: 10
+  delay: 5
+  until: fetch_ca_cert is not failed
 
 - name: Copy Consul config
   ansible.builtin.template:

@@ -1,0 +1,77 @@
+---
+- name: Set Vault facts
+  ansible.builtin.set_fact:
+    vault_token: '{{ lookup("file", ".tmp/root_token_vault.txt") }}'
+
+- name: Enable pki secrets engine
+  ansible.builtin.shell:
+    VAULT_TOKEN={{ vault_token }} vault secrets enable pki
+  register: enable_pki
+  changed_when: enable_pki.rc == 0
+  failed_when:
+    - enable_pki.rc != 0
+    - '"path is already in use" not in enable_pki.stderr'
+  retries: 10
+  delay: 5
+  until: enable_pki is not failed
+
+- name: Tune pki secrets engine
+  ansible.builtin.shell:
+    VAULT_TOKEN={{ vault_token }} vault secrets tune -max-lease-ttl=43800h pki
+
+- name: Check Vault intermediate CA csr file
+  ansible.builtin.stat:
+    path: /etc/certs.d/intermediate-ca-csr.pem
+  register: stat_int_csr
+
+- name: Generate Vault intermediate CA csr
+  when: not stat_int_csr.stat.exists
+  ansible.builtin.shell:
+    VAULT_TOKEN={{ vault_token }} vault write -format=json
+      pki/intermediate/generate/internal
+      common_name="Vault Intermediate Authority"
+      ttl="43800h"
+      add_basic_constraints=true
+  register: vault_csr
+
+- name: Save Vault intermediate CA csr
+  when: not stat_int_csr.stat.exists
+  ansible.builtin.copy:
+    content: '{{ "data" | extract(vault_csr.stdout | from_json, "csr") }}'
+    dest: /etc/certs.d/intermediate-ca-csr.pem
+
+- name: Sign Vault intermediate CA cert
+  community.crypto.x509_certificate:
+    path: /etc/certs.d/intermediate-ca-cert.pem
+    owner: vault
+    group: vault
+    provider: ownca
+    csr_path: /etc/certs.d/intermediate-ca-csr.pem
+    ownca_content: '{{ lookup("file", ".tmp/certs/ca.crt") }}'
+    ownca_privatekey_content: '{{ lookup("file", ".tmp/certs/ca.key") }}'
+    ownca_not_after: "+1825d"
+    ownca_not_before: "-1d"
+    return_content: true
+  register: vault_int_ca_cert
+
+- name: Import Vault intermediate CA cert
+  ansible.builtin.shell:
+    VAULT_TOKEN={{ vault_token }} vault write pki/intermediate/set-signed certificate=@{{ vault_int_ca_cert.filename }}
+
+- name: Create Vault pki role
+  ansible.builtin.shell:
+    VAULT_TOKEN={{ vault_token }} vault write
+      pki/roles/nomad-cluster
+      allowed_domains=global.nomad,dc1.consul,node.consul,service.consul,{{ external_domain }},{{ apps_subdomain }}.{{ external_domain }}
+      allow_subdomains=true
+      max_ttl=86400s
+      require_cn=false
+      generate_lease=true
+
+- name: Create vault pki policy
+  ansible.builtin.shell:
+    stdin: |
+      path "pki/issue/nomad-cluster" {
+        capabilities = ["update"]
+      }
+    cmd: VAULT_TOKEN={{ vault_token }} vault policy write tls-policy -

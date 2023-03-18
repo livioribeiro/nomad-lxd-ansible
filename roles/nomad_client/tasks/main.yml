@@ -110,14 +110,18 @@
     state: present
     update_cache: true
 
-- name: Copy nomad certs
-  loop: ["cert", "private_key"]
-  ansible.builtin.copy:
-    content: '{{ lookup("file", ".tmp/certs/nomad_client/" + item + ".pem") }}'
-    dest: '/etc/certs.d/{{ item }}.pem'
+- name: Create Nomad certs ans setup consul-template
+  ansible.builtin.import_role:
+    name: certs_consul_template
+  vars:
+    templates_dir: /opt/nomad/templates
+    certs_dir: /opt/nomad/tls
+    service_name: nomad
     owner: nomad
-    mode: "0600"
-  notify: Restart Nomad
+    common_name: client.global.nomad
+    alt_names:
+      - client.global.nomad
+      - nomad-client.service.consul
 
 - name: Copy nomad config
   ansible.builtin.template:

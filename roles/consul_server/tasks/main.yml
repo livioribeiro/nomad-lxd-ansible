@@ -18,18 +18,19 @@
   ansible.builtin.import_role:
     name: ca_cert
 
-- name: Create Consul certs
+- name: Create Consul certs and setup consul-template
   ansible.builtin.import_role:
-    name: certs_server
+    name: certs_consul_template
   vars:
+    templates_dir: /opt/consul/templates
+    certs_dir: /opt/consul/tls
+    service_name: consul
     owner: consul
+    common_name: server.dc1.consul
     alt_names:
-      - IP:127.0.0.1
-      - 'IP:{{ ansible_host }}'
-      - DNS:localhost
-      - DNS:server.dc1.consul
-      - DNS:consul.service.consul
-      - 'DNS:consul.{{ external_domain }}'
+      - server.dc1.consul
+      - consul.service.consul
+      - 'consul.{{ external_domain }}'
 
 - name: Copy Consul config
   ansible.builtin.template:

@@ -1,0 +1,8 @@
+template {
+  source      = "{{ templates_dir }}/{{ item }}.tpl"
+  destination = "{{ certs_dir }}/{{ item }}"
+  user        = "{{ service_name }}"
+  group       = "{{ service_name }}"
+  perms       = 0600
+  command     = "systemctl reload {{ service_name }}"
+}

@@ -7,28 +7,27 @@
 
 - name: Create HAProxy certs
   ansible.builtin.import_role:
-    name: certs_server
+    name: certs_ownca
   vars:
+    certs_dir: /etc/certs.d
     owner: haproxy
+    agent_name: haproxy
     alt_names:
       - 'DNS:*.{{ external_domain }}'
       - 'DNS:*.{{ apps_subdomain }}.{{ external_domain }}'
 
-- name: Combine HAProxy cert with private key
-  ansible.builtin.shell:
-    chdir: /etc/certs.d
-    cmd: cat private_key.pem cert.pem > haproxy.pem
-    creates: /etc/certs.d/haproxy.pem
+- ansible.builtin.set_fact:
+    certs_dir: /opt/haproxy/tls
 
-- name: Copy Nomad cert with private key combined
-  ansible.builtin.copy:
-    content: |
-      {{ lookup("file", ".tmp/certs/nomad_client/private_key.pem") }}
-      {{ lookup("file", ".tmp/certs/nomad_client/cert.pem") }}
-    dest: '/etc/certs.d/nomad.crt'
+- name: Create HAProxy client certs and setup consul-template
+  ansible.builtin.import_role:
+    name: certs_consul_template
+  vars:
+    templates_dir: /opt/haproxy/templates
+    certs_dir: /opt/haproxy/tls
+    common_name: 'haproxy.{{ external_domain }}'
+    service_name: haproxy
     owner: haproxy
-    mode: "0600"
-  notify: Restart HAProxy
 
 - name: Copy HAProxy config
   ansible.builtin.template:

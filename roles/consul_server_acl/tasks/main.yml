@@ -14,6 +14,7 @@
     - '"ACL bootstrap no longer allowed" not in acl_bootstrap.stderr'
   retries: 3
   delay: 10
+  until: acl_bootstrap is not failed
 
 - name: Define agent token
   ansible.builtin.set_fact:
@@ -22,10 +23,6 @@
 - name: Create consul agent token
   ansible.builtin.command:
     consul acl token create
-      -http-addr https://localhost:8501
-      -ca-file /etc/certs.d/ca.pem
-      -client-cert /etc/certs.d/cert.pem
-      -client-key /etc/certs.d/private_key.pem
       -token "{{ consul_management_token }}"
       -description "{{ ansible_hostname }} agent token"
       -node-identity "{{ ansible_hostname }}:dc1"
@@ -35,8 +32,6 @@
   failed_when:
     - create_agent_token.rc != 0
     - '"SecretID is already in use" not in create_agent_token.stderr'
-  retries: 3
-  delay: 10
 
 - name: Check Consul annonymous policy
   run_once: true

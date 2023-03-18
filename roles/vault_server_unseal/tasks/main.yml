@@ -1,5 +1,5 @@
 ---
-- name: Wait for vault to fully initialize
+- name: Wait for Vault to fully initialize
   ansible.builtin.wait_for:
     timeout: 30
 

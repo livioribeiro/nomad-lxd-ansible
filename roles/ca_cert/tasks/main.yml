@@ -7,13 +7,13 @@
 
 - name: Copy ca certificate
   ansible.builtin.copy:
-    src: .tmp/certs/ca/cert.pem
-    dest: /etc/certs.d/ca.pem
+    src: .tmp/certs/ca.crt
+    dest: /etc/certs.d/ca.crt
     mode: "0644"
 
 - name: Link ca certificate
   ansible.builtin.file:
-    src: /etc/certs.d/ca.pem
+    src: /etc/certs.d/ca.crt
     dest: /usr/local/share/ca-certificates/local_cluster.crt
     state: link
   register: ca_certificate

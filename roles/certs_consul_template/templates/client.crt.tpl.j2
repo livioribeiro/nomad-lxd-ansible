@@ -1,0 +1,5 @@
+{{- with secret "pki/issue/nomad-cluster"
+    "ttl=24h"
+    "alt_names={{ client_alt_names | default([]) | join(",") }}" -}}
+{{ .Data.certificate }}
+{{- end -}}

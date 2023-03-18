@@ -1,0 +1,54 @@
+---
+- name: 'Set certs role facts {{ ansible_hostname }}'
+  ansible.builtin.set_fact:
+    certs_dir: '{{ certs_dir | default("/etc/certs.d") }}'
+    owner: '{{ owner | default("root") }}'
+
+- name: 'Check certs directory'
+  ansible.builtin.stat:
+    path: '{{ certs_dir }}'
+  register: stat_certs_dir
+
+- name: 'Create certs directory'
+  when: not stat_certs_dir.stat.exists
+  ansible.builtin.file:
+    path: '{{ certs_dir }}'
+    state: directory
+    owner: '{{ owner }}'
+    group: '{{ owner }}'
+    mode: "0700"
+
+- name: 'Create private key {{ ansible_hostname }}'
+  community.crypto.openssl_privatekey:
+    path: '{{ certs_dir }}/agent.crt.key'
+    owner: '{{ owner }}'
+    group: '{{ owner }}'
+  register: private_key
+
+- name: 'Create certificate signing request {{ ansible_hostname }}'
+  community.crypto.openssl_csr:
+    path: '{{ certs_dir }}/agent.csr'
+    owner: '{{ owner }}'
+    group: '{{ owner }}'
+    privatekey_path: '{{ private_key.filename }}'
+    subject_alt_name: '{{ alt_names }}'
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+      - dataEncipherment
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  register: csr
+
+- name: 'Sign certificate {{ ansible_hostname }}'
+  community.crypto.x509_certificate:
+    path: '{{ certs_dir }}/agent.crt'
+    owner: '{{ owner }}'
+    group: '{{ owner }}'
+    provider: ownca
+    csr_path: "{{ csr.filename }}"
+    ownca_content: '{{ lookup("file", ".tmp/certs/ca.crt") }}'
+    ownca_privatekey_content: '{{ lookup("file", ".tmp/certs/ca.key") }}'
+    ownca_not_after: "+3650d"
+    ownca_not_before: "-1d"

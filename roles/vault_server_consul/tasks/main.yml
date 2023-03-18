@@ -1,0 +1,25 @@
+---
+- name: Create Consul Vault token
+  ansible.builtin.import_role:
+    name: consul_token
+  vars:
+    token_file: /etc/vault.d/consul_token.txt
+    policy_name: vault-server
+    policy_rules: |
+      service "vault" {
+        policy = "write"
+      }
+
+- name: Read Consul Vault token
+  ansible.builtin.slurp:
+    path: /etc/vault.d/consul_token.txt
+  register: read_consul_token
+
+- name: Edit Vault config file
+  ansible.builtin.blockinfile:
+    path: /etc/vault.d/vault.hcl
+    block: |
+      service_registration "consul" {
+        token = "{{ read_consul_token.content | b64decode }}"
+      }
+  notify: Reload Vault

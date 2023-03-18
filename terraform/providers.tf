@@ -1,4 +1,8 @@
 terraform {
+  backend "consul" {
+    path    = "terraform/nomad-cluster"
+  }
+
   required_providers {
     consul = {
       source  = "hashicorp/consul"
@@ -37,5 +41,5 @@ provider "nomad" {
 provider "vault" {
   address      = var.vault_address
   token        = var.vault_token
-  ca_cert_file = "../.tmp/certs/ca/cert.pem"
+  ca_cert_file = "../.tmp/certs/ca.crt"
 }

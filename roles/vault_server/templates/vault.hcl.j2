@@ -1,18 +1,18 @@
 ui = true
 disable_mlock = true
 
+api_addr     = "https://{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}:8200"
+cluster_addr = "https://{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}:8201"
+
 listener "tcp" {
   address       = "0.0.0.0:8200"
-  tls_cert_file = "/etc/certs.d/cert_combined.pem"
-  tls_key_file  = "/etc/certs.d/private_key.pem"
+  tls_cert_file = "/opt/vault/tls/agent.crt"
+  tls_key_file  = "/opt/vault/tls/agent.crt.key"
+  tls_client_ca_file = "/opt/vault/tls/ca.crt"
 
   telemetry {
     unauthenticated_metrics_access = true
   }
-}
-
-service_registration "consul" {
-  token = "{{ consul_token }}"
 }
 
 storage "raft" {
@@ -23,16 +23,13 @@ storage "raft" {
   {% if host != ansible_hostname -%}
   retry_join {
     leader_api_addr         = "https://{{ hostvars[host].ansible_host }}:8200"
-    leader_ca_cert_file     = "/etc/certs.d/ca.pem"
-    leader_client_cert_file = "/etc/certs.d/cert.pem"
-    leader_client_key_file  = "/etc/certs.d/private_key.pem"
+    leader_ca_cert_file     = "/opt/vault/tls/ca.crt"
+    leader_client_cert_file = "/opt/vault/tls/agent.crt"
+    leader_client_key_file  = "/opt/vault/tls/agent.crt.key"
   }
   {% endif -%}
   {% endfor -%}
 }
-
-api_addr     = "https://{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}:8200"
-cluster_addr = "https://{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}:8201"
 
 telemetry {
   disable_hostname = true
