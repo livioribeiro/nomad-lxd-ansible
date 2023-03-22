@@ -1,0 +1,65 @@
+# variables:
+# templates_dir
+# certs_dir
+# service_name
+# owner
+# common_name
+# alt_names
+---
+- name: Create certs dir
+  ansible.builtin.file:
+    path: '{{ certs_dir }}'
+    state: directory
+    owner: '{{ owner }}'
+    group: '{{ owner }}'
+    mode: "0700"
+
+- name: Generate server certs from Vault
+  when: certs_server | default(false)
+  delegate_to: vault-server1
+  ansible.builtin.shell:
+    VAULT_TOKEN={{ lookup("file", ".tmp/root_token_vault.txt") }} vault write -format=json
+      pki/issue/nomad-cluster
+      common_name={{ common_name }}
+      ttl=24h
+      alt_names='localhost,{{ ansible_hostname }}.node.consul,{{ alt_names | join(",") }}'
+      ip_sans=127.0.0.1,{{ ansible_host }}
+      format=pem_bundle
+  register: certs
+
+- name: Copy server certs
+  when: certs_server | default(false)
+  loop:
+    - { key: certificate, file: '{{ certs_dir }}/agent.crt' }
+    - { key: private_key, file: '{{ certs_dir }}/agent.key' }
+    - { key: issuing_ca, file: '{{ certs_dir }}/ca.crt' }
+  ansible.builtin.copy:
+    content: '{{ "data" | extract(certs.stdout | from_json, item.key) }}'
+    dest: '{{ item.file }}'
+    owner: '{{ owner }}'
+    group: '{{ owner }}'
+    mode: "0600"
+
+- name: Generate client certs from Vault
+  when: certs_client | default(false)
+  delegate_to: vault-server1
+  ansible.builtin.shell:
+    VAULT_TOKEN={{ lookup("file", ".tmp/root_token_vault.txt") }}
+      vault write -format=json
+      pki/issue/nomad-cluster
+      ttl=24h
+      alt_names='{{ alt_names | default([]) | join(",") }}'
+      format=pem_bundle
+  register: client_certs
+
+- name: Copy client certs
+  when: certs_client | default(false)
+  loop:
+    - { key: certificate, file: '{{ certs_dir }}/client.crt' }
+    - { key: private_key, file: '{{ certs_dir }}/client.key' }
+  ansible.builtin.copy:
+    content: '{{ "data" | extract(client_certs.stdout | from_json, item.key) }}'
+    dest: '{{ item.file }}'
+    owner: '{{ owner }}'
+    group: '{{ owner }}'
+    mode: "0600"

@@ -75,7 +75,7 @@ resource "vault_identity_oidc_scope" "groups" {
 
 resource "vault_identity_oidc_provider" "nomad" {
   name = "nomad"
-  issuer_host = "vault.10-99-0-1.nip.io"
+  issuer_host = "vault.${var.external_domain}"
   allowed_client_ids = [
     vault_identity_oidc_client.nomad.client_id
   ]

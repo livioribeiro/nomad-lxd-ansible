@@ -1,16 +1,16 @@
 variable "version" {
   type    = string
-  default = "1.18.4-rootless"
-}
-
-variable "postgres_version" {
-  type    = string
-  default = "15.1-alpine"
+  default = "1.19.0-rootless"
 }
 
 variable "namespace" {
   type    = string
   default = "system-scm"
+}
+
+variable "gitea_host" {
+  type    = string
+  default = ""
 }
 
 variable "data_volume_name" {
@@ -69,13 +69,9 @@ job "scm" {
               destination_name = "scm-database"
               local_bind_port  = 5432
             }
-
-            upstreams {
-              destination_name = "scm-cache"
-              local_bind_port  = 6379
-            }
           }
         }
+
         sidecar_task {
           resources {
             cpu    = 50
@@ -93,6 +89,24 @@ job "scm" {
       access_mode     = "single-node-writer"
     }
 
+    task "redis" {
+      driver = "docker"
+
+      lifecycle {
+        hook    = "prestart"
+        sidecar = true
+      }
+
+      config {
+        image = "redis:7.0-alpine"
+      }
+
+      resources {
+        cpu = 100
+        memory = 128
+      }
+    }
+
     task "gitea" {
       driver = "docker"
 
@@ -107,24 +121,26 @@ job "scm" {
       }
 
       env {
-        GITEA__server__DOMAIN               = "gitea.apps.nomad.localhost"
-        GITEA__server__ROOT_URL             = "http://gitea.apps.nomad.localhost/"
-        GITEA__security__INSTALL_LOCK       = "true"
-        GITEA__security__INTERNAL_TOKEN_URI = "file:/var/lib/gitea/internal_token"
-        GITEA__security__SECRET_KEY_URI     = "file:/var/lib/gitea/secret_key"
-        GITEA__database__DB_TYPE            = "postgres"
-        GITEA__database__HOST               = "${NOMAD_UPSTREAM_ADDR_scm-database}"
-        GITEA__database__NAME               = "gitea"
-        GITEA__database__USER               = "gitea"
-        GITEA__database__PASSWD             = "gitea"
-        GITEA__cache__ADAPTER               = "redis"
-        GITEA__cache__HOST                  = "redis://${NOMAD_UPSTREAM_ADDR_scm-cache}/0"
-        GITEA__queue__TYPE                  = "redis"
-        GITEA__queue__CONN_STR              = "redis://${NOMAD_UPSTREAM_ADDR_scm-cache}/0"
-        GITEA__session__PROVIDER            = "redis"
-        GITEA__log__LEVEL                   = "Warn"
-        GITEA__actions__ENABLED             = "true"
-        GITEA__metrics__ENABLED             = "true"
+        GITEA__server__HTTP_PORT        = "${NOMAD_PORT_http}"
+        GITEA__server__DOMAIN           = "${var.gitea_host}"
+        GITEA__server__ROOT_URL         = "http://${var.gitea_host}/"
+        GITEA__security__INSTALL_LOCK   = "true"
+        GITEA__security__INTERNAL_TOKEN = "gitea_internal_token"
+        GITEA__security__SECRET_KEY     = "gitea_secret_key"
+        GITEA__database__DB_TYPE        = "postgres"
+        GITEA__database__HOST           = "${NOMAD_UPSTREAM_ADDR_scm-database}"
+        GITEA__database__NAME           = "gitea"
+        GITEA__database__USER           = "gitea"
+        GITEA__database__PASSWD         = "gitea"
+        GITEA__cache__ADAPTER           = "redis"
+        GITEA__cache__HOST              = "redis://localhost:6379/0"
+        GITEA__queue__TYPE              = "redis"
+        GITEA__queue__CONN_STR          = "redis://localhost:6379/0"
+        GITEA__session__PROVIDER        = "redis"
+        GITEA__session__PROVIDER_CONFIG = "redis://localhost:6379/0"
+        GITEA__log__LEVEL               = "Warn"
+        GITEA__actions__ENABLED         = "true"
+        GITEA__metrics__ENABLED         = "true"
       }
 
       resources {
@@ -135,50 +151,6 @@ job "scm" {
       volume_mount {
         volume      = "data"
         destination = "/var/lib/gitea"
-      }
-
-      template {
-        destination = "local/secret_key"
-        data        = uuidv5("dns", "gitea.apps.nomad")
-      }
-
-      template {
-        destination = "local/internal_token"
-        data        = sha512(uuidv4())
-      }
-    }
-
-    task "gitea-init-secrets" {
-      lifecycle {
-        hook = "prestart"
-        sidecar = false
-      }
-
-      driver = "exec"
-      config {
-        command = "sh"
-        args = ["local/init_secrets.sh"]
-      }
-
-      volume_mount {
-        volume      = "data"
-        destination = "/var/lib/gitea"
-      }
-
-      template {
-        destination = "local/init_secrets.sh"
-        data = <<EOT
-#!/bin/sh
-set -e
-
-if [ ! -f /var/lib/gitea/internal_token]; then
-  echo '${sha512(uuidv4())}' > /var/lib/gitea/internal_token
-fi
-
-if [ ! -f /var/lib/gitea/secret_key]; then
-  echo '${sha512(uuidv4())}' > /var/lib/gitea/secret_key
-fi
-        EOT
       }
     }
   }
@@ -221,7 +193,7 @@ fi
       driver = "docker"
 
       config {
-        image = "postgres:15.1-alpine"
+        image = "postgres:15.2-alpine"
       }
 
       env {
@@ -233,40 +205,6 @@ fi
       volume_mount {
         volume      = "data"
         destination = "/var/lib/postgresql/data/pgdata"
-      }
-
-      resources {
-        cpu = 100
-        memory = 128
-      }
-    }
-  }
-
-  group "cache" {
-    network {
-      mode = "bridge"
-    }
-
-    service {
-      port = "6379"
-
-      connect {
-        sidecar_service {}
-
-        sidecar_task {
-          resources {
-            cpu    = 50
-            memory = 32
-          }
-        }
-      }
-    }
-
-    task "redis" {
-      driver = "docker"
-
-      config {
-        image = "redis:7.0-alpine"
       }
 
       resources {

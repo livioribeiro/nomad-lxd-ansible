@@ -6,9 +6,9 @@ cluster_addr = "https://{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}:8201"
 
 listener "tcp" {
   address       = "0.0.0.0:8200"
-  tls_cert_file = "/opt/vault/tls/agent.crt"
-  tls_key_file  = "/opt/vault/tls/agent.crt.key"
-  tls_client_ca_file = "/opt/vault/tls/ca.crt"
+  tls_cert_file = "/opt/vault/tls/cert.pem"
+  tls_key_file  = "/opt/vault/tls/key.pem"
+  tls_client_ca_file = "/etc/certs.d/ca.crt"
 
   telemetry {
     unauthenticated_metrics_access = true
@@ -23,12 +23,16 @@ storage "raft" {
   {% if host != ansible_hostname -%}
   retry_join {
     leader_api_addr         = "https://{{ hostvars[host].ansible_host }}:8200"
-    leader_ca_cert_file     = "/opt/vault/tls/ca.crt"
-    leader_client_cert_file = "/opt/vault/tls/agent.crt"
-    leader_client_key_file  = "/opt/vault/tls/agent.crt.key"
+    leader_ca_cert_file     = "/etc/certs.d/ca.crt"
+    leader_client_cert_file = "/opt/vault/tls/cert.pem"
+    leader_client_key_file  = "/opt/vault/tls/key.pem"
   }
   {% endif -%}
   {% endfor -%}
+}
+
+service_registration "consul" {
+  token = "{{ vault_consul_token }}"
 }
 
 telemetry {

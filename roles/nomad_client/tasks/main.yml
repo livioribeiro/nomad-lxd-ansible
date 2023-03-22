@@ -106,14 +106,15 @@
 
 - name: Install Nomad
   ansible.builtin.apt:
-    name: nomad
+    name: nomad=1.5.0-1
     state: present
     update_cache: true
 
-- name: Create Nomad certs ans setup consul-template
-  ansible.builtin.import_role:
-    name: certs_consul_template
+- name: Create Consul certs
+  ansible.builtin.import_tasks: vault_certs.yml
   vars:
+    certs_server: true
+    certs_client: true
     templates_dir: /opt/nomad/templates
     certs_dir: /opt/nomad/tls
     service_name: nomad

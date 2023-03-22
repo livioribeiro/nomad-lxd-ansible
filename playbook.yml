@@ -20,19 +20,25 @@
       ansible.builtin.wait_for:
         timeout: 30
 
-- name: Add CA cert
-  hosts: all
+- name: Setup Consul servers
+  hosts: consul_servers
   roles:
     - ca_cert
-
-- name: Install Hashicorp apt repository
-  hosts: consul_servers:vault_servers:nomad_servers:nomad_clients:load-balancer
-  roles:
     - hashicorp_apt
+    - consul_server
+    - consul_dns
+
+- name: Initialize Consul acl
+  hosts: consul_servers
+  roles:
+    - consul_server_acl
 
 - name: Setup Vault servers
   hosts: vault_servers
   roles:
+    - ca_cert
+    - hashicorp_apt
+    - consul_client
     - vault_server
 
 - name: Initialize Vault
@@ -50,31 +56,11 @@
   roles:
     - vault_server_pki
 
-- name: Setup Consul servers
-  hosts: consul_servers
-  roles:
-    - consul_server
-    - consul_dns
-
-- name: Initialize Consul acl
-  hosts: consul_servers
-  roles:
-    - consul_server_acl
-
-- name: Setup Vault Consul client
-  hosts: vault_servers
-  roles:
-    - consul_client
-    - vault_server_consul
-
-- name: Unseal Vault
-  hosts: vault_servers
-  roles:
-    - vault_server_unseal
-
 - name: Setup Nomad servers
   hosts: nomad_servers
   roles:
+    - ca_cert
+    - hashicorp_apt
     - consul_client
     - nomad_server
 
@@ -82,12 +68,6 @@
   hosts: nomad-server1
   roles:
     - nomad_server_acl
-
-- name: Setup Nomad clients
-  hosts: nomad_clients
-  roles:
-    - consul_client
-    - nomad_client
 
 - name: Setup NFS Server
   hosts: nfs-server
@@ -97,27 +77,26 @@
 - name: Setup load balancer
   hosts: load-balancer
   roles:
+    - ca_cert
     - load_balancer
+
+- name: Setup Nomad clients
+  hosts: nomad_clients
+  roles:
+    - ca_cert
+    - hashicorp_apt
+    - consul_client
+    - nomad_client
+
+- name: Setup Nomad clients consul-template
+  hosts: nomad_clients
+  roles:
+    - nomad_client_consul_template
 
 - name: Setup nomad jobs
   hosts: localhost
   connection: local
   tasks:
-    - name: Generate client cert
-      delegate_to: vault-server1
-      connection: ssh
-      ansible.builtin.shell:
-        VAULT_TOKEN={{ lookup("file", ".tmp/root_token_vault.txt") }}
-          vault write -format=json pki/issue/nomad-cluster ttl=4h
-      register: client_cert
-    - name: Save client cert
-      loop:
-        - certificate
-        - private_key
-        - issuing_ca
-      ansible.builtin.copy:
-        content: '{{ "data" | extract(client_cert.stdout | from_json, item) }}'
-        dest: '/tmp/{{ item }}.pem'
     - name: Execute terraform
       community.general.terraform:
         project_path: ./terraform
@@ -130,13 +109,13 @@
           nfs_server_host: '{{ hostvars["nfs-server"].ansible_host }}'
           external_domain: '{{ external_domain }}'
           apps_subdomain: '{{ apps_subdomain }}'
-          ca_cert: '{{ lookup("file", "/tmp/issuing_ca.pem") }}'
+          ca_cert: '{{ lookup("file", ".tmp/certs/ca.crt") }}'
           consul_address: '{{ hostvars["consul-server1"].ansible_host }}:8501'
           consul_scheme: https
           consul_token: '{{ lookup("file", ".tmp/root_token_consul.txt") }}'
           nomad_address: 'https://{{ hostvars["nomad-server1"].ansible_host}}:4646'
           nomad_secret_id: '{{ lookup("file", ".tmp/root_token_nomad.txt") }}'
-          client_cert: '{{ lookup("file", "/tmp/certificate.pem") }}'
-          client_key: '{{ lookup("file", "/tmp/private_key.pem") }}'
+          client_cert: '{{ lookup("file", ".tmp/certs/client.crt") }}'
+          client_key: '{{ lookup("file", ".tmp/certs/client.key") }}'
           vault_address: 'https://{{ hostvars["vault-server1"].ansible_host }}:8200'
           vault_token: '{{ lookup("file", ".tmp/root_token_vault.txt") }}'

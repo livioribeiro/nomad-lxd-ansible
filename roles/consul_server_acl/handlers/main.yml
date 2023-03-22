@@ -1,0 +1,8 @@
+---
+- name: Save Consul root token
+  delegate_to: localhost
+  connection: local
+  ansible.builtin.copy:
+    content: '{{ "SecretID" | extract(consul_acl_bootstrap.stdout | from_json) }}'
+    dest: '{{ playbook_dir }}/.tmp/root_token_consul.txt'
+    mode: "0644"

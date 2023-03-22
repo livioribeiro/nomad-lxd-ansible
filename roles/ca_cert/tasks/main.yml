@@ -14,7 +14,7 @@
 - name: Link ca certificate
   ansible.builtin.file:
     src: /etc/certs.d/ca.crt
-    dest: /usr/local/share/ca-certificates/local_cluster.crt
+    dest: /usr/local/share/ca-certificates/nomad-cluster.crt
     state: link
   register: ca_certificate
 

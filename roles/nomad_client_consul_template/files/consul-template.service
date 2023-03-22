@@ -1,7 +1,6 @@
 [Unit]
 Description="consul-template"
 Requires=network-online.target
-After={{ service_name }}.target
 ConditionFileNotEmpty=/etc/consul-template.d/consul-template.hcl
 
 [Service]

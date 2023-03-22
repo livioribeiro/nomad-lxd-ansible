@@ -18,7 +18,7 @@ variable "consul_acl_token" {
   default = ""
 }
 
-job "proxy" {
+job "gateway" {
   datacenters = ["infra"]
   type        = "system"
   namespace   = var.namespace

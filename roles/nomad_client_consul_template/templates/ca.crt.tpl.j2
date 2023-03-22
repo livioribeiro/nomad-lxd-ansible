@@ -1,0 +1,3 @@
+{{- with secret "pki/issue/nomad-cluster" "format=pem_bundle" -}}
+{{ .Data.issuing_ca }}
+{{- end -}}

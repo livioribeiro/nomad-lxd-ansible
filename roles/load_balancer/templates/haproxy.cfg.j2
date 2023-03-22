@@ -7,7 +7,7 @@ defaults
 
 frontend http
   bind :80
-  bind :443 ssl crt /etc/certs.d/agent.crt
+  bind :443 ssl crt /opt/haproxy/tls/cert.pem
   http-request set-header x-forwarded-proto %[ssl_fc,iif(https,http)]
 
   # acls
@@ -26,7 +26,7 @@ frontend http
 
 backend consul_dashboard
   {% for host in groups["consul_servers"] -%}
-  server {{ host }} {{ hostvars[host].ansible_host }}:8501 ssl verify required ca-file /etc/certs.d/ca.crt crt /opt/haproxy/tls/client.crt
+  server {{ host }} {{ hostvars[host].ansible_host }}:8501 ssl verify required ca-file /etc/certs.d/ca.crt crt /opt/haproxy/tls/cert.pem
   {% endfor %}
 
 backend vault_dashboard
@@ -36,7 +36,7 @@ backend vault_dashboard
 
 backend nomad_dashboard
   {% for host in groups["nomad_servers"] -%}
-  server {{ host }} {{ hostvars[host].ansible_host }}:4646 ssl verify required ca-file /etc/certs.d/ca.crt crt /opt/haproxy/tls/client.crt
+  server {{ host }} {{ hostvars[host].ansible_host }}:4646 ssl verify required ca-file /etc/certs.d/ca.crt crt /opt/haproxy/tls/cert.pem
   {% endfor %}
 
 backend traefik_dashboard

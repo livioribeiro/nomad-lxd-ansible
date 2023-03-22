@@ -9,25 +9,20 @@
   ansible.builtin.import_role:
     name: certs_ownca
   vars:
-    certs_dir: /etc/certs.d
+    certs_dir: /opt/haproxy/tls
     owner: haproxy
-    agent_name: haproxy
     alt_names:
       - 'DNS:*.{{ external_domain }}'
       - 'DNS:*.{{ apps_subdomain }}.{{ external_domain }}'
 
-- ansible.builtin.set_fact:
-    certs_dir: /opt/haproxy/tls
-
-- name: Create HAProxy client certs and setup consul-template
-  ansible.builtin.import_role:
-    name: certs_consul_template
-  vars:
-    templates_dir: /opt/haproxy/templates
-    certs_dir: /opt/haproxy/tls
-    common_name: 'haproxy.{{ external_domain }}'
-    service_name: haproxy
+- name: Rename HAProxy private key
+  ansible.builtin.copy:
+    remote_src: true
+    src: /opt/haproxy/tls/key.pem
+    dest: /opt/haproxy/tls/cert.pem.key
     owner: haproxy
+    group: haproxy
+    mode: "0600"
 
 - name: Copy HAProxy config
   ansible.builtin.template:

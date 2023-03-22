@@ -2,26 +2,35 @@
 
 Ansible playbook to create a [Nomad](https://www.nomadproject.io) cluster
 with [Consul](https://www.consul.io), [Vault](https://vaultproject.io),
-[Traefik](https://traefik.io/traefik/) and [Prometheus](https://prometheus.io)
-using [LXD](https://linuxcontainers.org/#LXD)
+[Traefik](https://traefik.io/traefik/) using [LXD](https://linuxcontainers.org/#LXD)
+and https://nip.io/
 
 The cluster contains the following nodes:
 
 - 3 Consul nodes
+- 3 Vault nodes
 - 3 Nomad server nodes
-- 4 Nomad client nodes (3 "apps" node, 1 "infra" node)
+- 5 Nomad client nodes (3 "apps" node, 2 "infra" node)
 - 1 NFS server node
+- 1 Load balancer node
 
 Consul is used to bootstrap the Nomad cluster, for service discovery and for the
 service mesh.
 
-The client infra nodes are the entrypoint of the cluster. They will run Traefik
-and use Consul service catalog to expose the applications. The ports 80 and 8080
-will be mapped into the host for convenience.
+The Nomad client infra nodes are the entrypoints of the cluster. They will run Traefik
+and use Consul service catalog to expose the applications.
 
-The proxy configuration exposes the services at `{{ service name }}.apps.localhost`,
-so when you deploy the service [hello.nomad](hello.nomad),
-it will be exposed at `hello-world.apps.localhost`
+Load balancer node will map ports 80 and 443 into the host, which will also have the ip
+`10.99.0.1`, that is part of the cluster.
+
+The proxy configuration exposes the services at `{{ service name }}.apps.10.99.0.1.nip.io`,
+so when you deploy the service [hello.nomad](hello.nomad), it will be exposed at
+`hello-world.apps.10.99.0.1.nip.io`
+
+Consul, Vault and Nomad ui can be accessed in `https://consul.10.99.0.1.nip.io`,
+`https://vault.10.99.0.1.nip.io` and `https://nomad.10.99.0.1.nip.io`, respectivelly.
+
+Root tokens can be found in the `.tmp` directory.
 
 ## NFS and CSI Plugin
 

@@ -1,11 +1,11 @@
 ---
 - name: Set Vault facts
   ansible.builtin.set_fact:
-    vault_token: '{{ lookup("file", ".tmp/root_token_vault.txt") }}'
+    vault_root_token: '{{ lookup("file", ".tmp/root_token_vault.txt") }}'
 
 - name: Enable pki secrets engine
   ansible.builtin.shell:
-    VAULT_TOKEN={{ vault_token }} vault secrets enable pki
+    VAULT_TOKEN={{ vault_root_token }} vault secrets enable pki
   register: enable_pki
   changed_when: enable_pki.rc == 0
   failed_when:
@@ -17,7 +17,7 @@
 
 - name: Tune pki secrets engine
   ansible.builtin.shell:
-    VAULT_TOKEN={{ vault_token }} vault secrets tune -max-lease-ttl=43800h pki
+    VAULT_TOKEN={{ vault_root_token }} vault secrets tune -max-lease-ttl=43800h pki
 
 - name: Check Vault intermediate CA csr file
   ansible.builtin.stat:
@@ -27,7 +27,7 @@
 - name: Generate Vault intermediate CA csr
   when: not stat_int_csr.stat.exists
   ansible.builtin.shell:
-    VAULT_TOKEN={{ vault_token }} vault write -format=json
+    VAULT_TOKEN={{ vault_root_token }} vault write -format=json
       pki/intermediate/generate/internal
       common_name="Vault Intermediate Authority"
       ttl="43800h"
@@ -56,11 +56,12 @@
 
 - name: Import Vault intermediate CA cert
   ansible.builtin.shell:
-    VAULT_TOKEN={{ vault_token }} vault write pki/intermediate/set-signed certificate=@{{ vault_int_ca_cert.filename }}
+    VAULT_TOKEN={{ vault_root_token }} vault write pki/intermediate/set-signed certificate=@{{ vault_int_ca_cert.filename }}
 
 - name: Create Vault pki role
   ansible.builtin.shell:
-    VAULT_TOKEN={{ vault_token }} vault write
+    VAULT_TOKEN={{ vault_root_token }}
+      vault write
       pki/roles/nomad-cluster
       allowed_domains=global.nomad,dc1.consul,node.consul,service.consul,{{ external_domain }},{{ apps_subdomain }}.{{ external_domain }}
       allow_subdomains=true
@@ -74,4 +75,4 @@
       path "pki/issue/nomad-cluster" {
         capabilities = ["update"]
       }
-    cmd: VAULT_TOKEN={{ vault_token }} vault policy write tls-policy -
+    cmd: VAULT_TOKEN={{ vault_root_token }} vault policy write tls-policy -

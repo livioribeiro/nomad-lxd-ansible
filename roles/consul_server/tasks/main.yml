@@ -1,7 +1,6 @@
 ---
 - name: Read Consul management token and encrypt key
   ansible.builtin.set_fact:
-    consul_management_token: '{{ lookup("file", ".tmp/root_token_consul.txt") }}'
     consul_encrypt_key: '{{ lookup("file", ".tmp/encrypt_keys/consul.txt") }}'
 
 - name: Define agent token
@@ -14,23 +13,19 @@
     state: present
     update_cache: true
 
-- name: Include CA cert
+- name: Create Consul certs
   ansible.builtin.import_role:
-    name: ca_cert
-
-- name: Create Consul certs and setup consul-template
-  ansible.builtin.import_role:
-    name: certs_consul_template
+    name: certs_ownca
   vars:
-    templates_dir: /opt/consul/templates
     certs_dir: /opt/consul/tls
-    service_name: consul
     owner: consul
-    common_name: server.dc1.consul
     alt_names:
-      - server.dc1.consul
-      - consul.service.consul
-      - 'consul.{{ external_domain }}'
+      - IP:127.0.0.1
+      - 'IP:{{ ansible_host }}'
+      - DNS:localhost
+      - DNS:server.dc1.consul
+      - DNS:consul.service.consul
+      - 'DNS:consul.{{ external_domain }}'
 
 - name: Copy Consul config
   ansible.builtin.template:

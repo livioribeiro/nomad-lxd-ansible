@@ -1,0 +1,22 @@
+vault {
+  address      = "https://active.vault.service.consul:8200"
+  token        = "{{ vault_token }}"
+  unwrap_token = false
+  renew_token  = true
+
+  ssl {
+    ca_cert = "/etc/certs.d/ca.crt"
+  }
+
+  retry {
+    attempts    = 0
+    max_backoff = "10m"
+  }
+}
+
+log_file {
+  path = "/var/log/consul-template.log"
+  log_rotate_bytes = 1024000
+  log_rotate_duration = "24h"
+  log_rotate_max_files = 10
+}

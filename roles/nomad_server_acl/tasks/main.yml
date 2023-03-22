@@ -3,9 +3,9 @@
   ansible.builtin.command:
     nomad acl bootstrap
       -address=https://localhost:4646
-      -ca-cert=/opt/nomad/tls/ca.crt
-      -client-cert=/opt/nomad/tls/client.crt
-      -client-key=/opt/nomad/tls/client.crt.key
+      -ca-cert=/etc/certs.d/ca.crt
+      -client-cert=/opt/nomad/tls/cert.pem
+      -client-key=/opt/nomad/tls/key.pem
       -t '{{ "{{" }} .SecretID {{ "}}" }}'
   register: acl_bootstrap_result
   changed_when:

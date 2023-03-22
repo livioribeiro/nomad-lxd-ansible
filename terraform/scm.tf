@@ -58,6 +58,7 @@ resource "nomad_job" "scm" {
       namespace            = nomad_namespace.system_scm.name
       data_volume_name     = nomad_external_volume.gitea_data.name
       database_volume_name = nomad_external_volume.scm_database_data.name
+      gitea_host           = "gitea.${var.apps_subdomain}.${var.external_domain}"
     }
   }
 }
@@ -65,20 +66,6 @@ resource "nomad_job" "scm" {
 resource "consul_config_entry" "scm_database_intention" {
   kind = "service-intentions"
   name = "scm-database"
-
-  config_json = jsonencode({
-    Sources = [
-      {
-        Name   = "gitea"
-        Action = "allow"
-      }
-    ]
-  })
-}
-
-resource "consul_config_entry" "scm_cache_intention" {
-  kind = "service-intentions"
-  name = "scm-cache"
 
   config_json = jsonencode({
     Sources = [

@@ -7,14 +7,19 @@
   run_once: true
   ansible.builtin.command:
     consul acl bootstrap -format=json
-  register: acl_bootstrap
-  changed_when: '"SecretID" in acl_bootstrap.stdout'
+  register: consul_acl_bootstrap
+  changed_when: '"SecretID" in consul_acl_bootstrap.stdout'
   failed_when:
-    - acl_bootstrap.rc != 0
-    - '"ACL bootstrap no longer allowed" not in acl_bootstrap.stderr'
+    - consul_acl_bootstrap.rc != 0
+    - '"ACL bootstrap no longer allowed" not in consul_acl_bootstrap.stderr'
   retries: 3
   delay: 10
-  until: acl_bootstrap is not failed
+  until: consul_acl_bootstrap is not failed
+  notify: Save Consul root token
+
+- name: Register Consul root token
+  ansible.builtin.set_fact:
+    consul_management_token: '{{ "SecretID" | extract(consul_acl_bootstrap.stdout | from_json) }}'
 
 - name: Define agent token
   ansible.builtin.set_fact:
