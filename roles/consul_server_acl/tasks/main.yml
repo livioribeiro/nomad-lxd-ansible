@@ -18,8 +18,14 @@
   notify: Save Consul root token
 
 - name: Register Consul root token
+  when: consul_acl_bootstrap.rc == 0
   ansible.builtin.set_fact:
     consul_management_token: '{{ "SecretID" | extract(consul_acl_bootstrap.stdout | from_json) }}'
+
+- name: Read Consul root token
+  when: consul_acl_bootstrap.rc != 0
+  ansible.builtin.set_fact:
+    consul_management_token: '{{ lookup("file", ".tmp/root_token_consul.txt") }}'
 
 - name: Define agent token
   ansible.builtin.set_fact:

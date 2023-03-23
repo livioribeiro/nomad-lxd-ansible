@@ -13,9 +13,9 @@ retry_join = [
 
 tls {
   defaults {
-    ca_file   = "/etc/certs.d/ca.crt"
-    cert_file = "/opt/consul/tls/cert.pem"
-    key_file  = "/opt/consul/tls/key.pem"
+    ca_file   = "/etc/certs.d/ca.pem"
+    cert_file = "/etc/certs.d/cert.pem"
+    key_file  = "/etc/certs.d/key.pem"
 
     verify_incoming = true
     verify_outgoing = true

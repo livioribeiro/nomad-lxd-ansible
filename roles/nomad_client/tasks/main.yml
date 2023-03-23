@@ -106,23 +106,20 @@
 
 - name: Install Nomad
   ansible.builtin.apt:
-    name: nomad=1.5.0-1
+    name: nomad
     state: present
     update_cache: true
 
-- name: Create Consul certs
-  ansible.builtin.import_tasks: vault_certs.yml
-  vars:
-    certs_server: true
-    certs_client: true
-    templates_dir: /opt/nomad/templates
-    certs_dir: /opt/nomad/tls
-    service_name: nomad
+- name: Copy Nomad client certs
+  loop:
+    - cert
+    - key
+  ansible.builtin.copy:
+    src: '.tmp/certs/nomad_client/{{ item }}.pem'
+    dest: /etc/certs.d/
     owner: nomad
-    common_name: client.global.nomad
-    alt_names:
-      - client.global.nomad
-      - nomad-client.service.consul
+    group: nomad
+    mode: "0600"
 
 - name: Copy nomad config
   ansible.builtin.template:

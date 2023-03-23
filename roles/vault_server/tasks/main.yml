@@ -5,20 +5,16 @@
     state: present
     update_cache: true
 
-- name: Create Vault certs
-  ansible.builtin.import_role:
-    name: certs_ownca
-  vars:
-    certs_dir: /opt/vault/tls
+- name: Copy Vault certs
+  loop:
+    - cert
+    - key
+  ansible.builtin.copy:
+    src: '.tmp/certs/vault/{{ item }}.pem'
+    dest: /etc/certs.d/
     owner: vault
-    alt_names:
-      - IP:127.0.0.1
-      - 'IP:{{ ansible_host }}'
-      - DNS:localhost
-      - DNS:vault.service.consul
-      - DNS:active.vault.service.consul
-      - DNS:standby.vault.service.consul
-      - 'DNS:vault.{{ external_domain }}'
+    group: vault
+    mode: "0600"
 
 - name: Create Consul Vault token
   ansible.builtin.import_role:

@@ -19,9 +19,9 @@ tls {
   http      = true
   rpc       = true
 
-  ca_file   = "/etc/certs.d/ca.crt"
-  cert_file = "/opt/nomad/tls/agent.crt"
-  key_file  = "/opt/nomad/tls/agent.key"
+  ca_file   = "/etc/certs.d/ca.pem"
+  cert_file = "/etc/certs.d/cert.pem"
+  key_file  = "/etc/certs.d/key.pem"
 
   verify_server_hostname = true
   verify_https_client    = true
@@ -34,9 +34,9 @@ consul {
 vault {
   enabled   = true
   address   = "https://active.vault.service.consul:8200"
-  ca_file   = "/etc/certs.d/ca.crt"
-  cert_file = "/opt/nomad/tls/client.crt"
-  key_file  = "/opt/nomad/tls/client.key"
+  ca_file   = "/etc/certs.d/ca.pem"
+  cert_file = "/etc/certs.d/cert.pem"
+  key_file  = "/etc/certs.d/key.pem"
 }
 
 telemetry {

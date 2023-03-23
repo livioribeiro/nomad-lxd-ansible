@@ -1,23 +1,20 @@
 ---
 - name: Install Nomad
   ansible.builtin.apt:
-    name: nomad=1.5.0-1
+    name: nomad
     state: present
     update_cache: true
 
-- name: Create Consul certs
-  ansible.builtin.import_role:
-    name: certs_ownca
-  vars:
-    certs_dir: /opt/nomad/tls
+- name: Copy Nomad certs
+  loop:
+    - cert
+    - key
+  ansible.builtin.copy:
+    src: '.tmp/certs/nomad/{{ item }}.pem'
+    dest: /etc/certs.d/
     owner: nomad
-    alt_names:
-      - IP:127.0.0.1
-      - 'IP:{{ ansible_host }}'
-      - DNS:localhost
-      - DNS:server.global.nomad
-      - DNS:nomad.service.consul
-      - 'DNS:nomad.{{ external_domain }}'
+    group: nomad
+    mode: "0600"
 
 - name: Create Consul Nomad token
   ansible.builtin.import_role:

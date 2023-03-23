@@ -16,9 +16,9 @@ tls {
   http      = true
   rpc       = true
 
-  ca_file   = "/etc/certs.d/ca.crt"
-  cert_file = "/opt/nomad/tls/cert.pem"
-  key_file  = "/opt/nomad/tls/key.pem"
+  ca_file   = "/etc/certs.d/ca.pem"
+  cert_file = "/etc/certs.d/cert.pem"
+  key_file  = "/etc/certs.d/key.pem"
 
   verify_server_hostname = true
   verify_https_client    = true
@@ -31,9 +31,9 @@ consul {
 vault {
   enabled          = true
   address          = "https://active.vault.service.consul:8200"
-  ca_file          = "/etc/certs.d/ca.crt"
-  cert_file        = "/opt/nomad/tls/cert.pem"
-  key_file         = "/opt/nomad/tls/key.pem"
+  ca_file          = "/etc/certs.d/ca.pem"
+  cert_file        = "/etc/certs.d/cert.pem"
+  key_file         = "/etc/certs.d/key.pem"
   create_from_role = "nomad-cluster"
   token            = "{{ vault_token }}"
 }

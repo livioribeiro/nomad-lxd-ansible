@@ -41,5 +41,5 @@ provider "nomad" {
 provider "vault" {
   address      = var.vault_address
   token        = var.vault_token
-  ca_cert_file = "../.tmp/certs/ca.crt"
+  ca_cert_file = "../.tmp/certs/ca/cert.pem"
 }

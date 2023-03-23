@@ -47,8 +47,8 @@
     group: vault
     provider: ownca
     csr_path: /etc/certs.d/intermediate-ca-csr.pem
-    ownca_content: '{{ lookup("file", ".tmp/certs/ca.crt") }}'
-    ownca_privatekey_content: '{{ lookup("file", ".tmp/certs/ca.key") }}'
+    ownca_content: '{{ lookup("file", ".tmp/certs/ca/cert.pem") }}'
+    ownca_privatekey_content: '{{ lookup("file", ".tmp/certs/ca/key.pem") }}'
     ownca_not_after: "+1825d"
     ownca_not_before: "-1d"
     return_content: true

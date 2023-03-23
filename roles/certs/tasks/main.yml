@@ -9,26 +9,42 @@
     state: directory
     mode: "0755"
 
+- name: Create certs sub directories
+  loop:
+    - ca
+    - client
+    - consul
+    - vault
+    - nomad
+    - nomad_client
+    - haproxy
+  ansible.builtin.file:
+    path: '{{ certs_dir }}/{{ item }}'
+    state: directory
+    mode: "0755"
+
 - name: Create CA private key
   community.crypto.openssl_privatekey:
-    path: .tmp/certs/ca.key
+    path: '{{ certs_dir }}/ca/key.pem'
   register: ca_private_key
 
 - name: Create CA certificate signing request
   community.crypto.openssl_csr:
-    path: '{{ certs_dir }}/ca.csr'
+    path: '{{ certs_dir }}/ca/csr.pem'
     privatekey_path: '{{ ca_private_key.filename }}'
     common_name: Nomad Cluster CA
     use_common_name_for_san: false  # since we do not specify SANs, don't use CN as a SAN
-    basic_constraints: [CA:TRUE]
+    basic_constraints:
+      - CA:TRUE
     basic_constraints_critical: true
-    key_usage: [keyCertSign]
+    key_usage:
+      - keyCertSign
     key_usage_critical: true
   register: ca_csr
 
 - name: Create self-signed CA certificate from CSR
   community.crypto.x509_certificate:
-    path: '{{ certs_dir }}/ca.crt'
+    path: '{{ certs_dir }}/ca/cert.pem'
     csr_path: '{{ ca_csr.filename }}'
     privatekey_path: '{{ ca_private_key.filename }}'
     provider: selfsigned
@@ -39,12 +55,12 @@
 # Client
 - name: Create client private key
   community.crypto.openssl_privatekey:
-    path: '{{ certs_dir }}/client.key'
+    path: '{{ certs_dir }}/client/key.pem'
   register: client_private_key
 
 - name: Create client certificate signing request
   community.crypto.openssl_csr:
-    path: '{{ certs_dir }}/client.csr'
+    path: '{{ certs_dir }}/client/csr.pem'
     privatekey_path: '{{ client_private_key.filename }}'
     extended_key_usage:
       - clientAuth
@@ -52,7 +68,7 @@
 
 - name: Sign client certificate
   community.crypto.x509_certificate:
-    path: '{{ certs_dir }}/client.crt'
+    path: '{{ certs_dir }}/client/cert.pem'
     provider: ownca
     csr_path: '{{ client_csr.filename }}'
     ownca_path: '{{ ca_certificate.filename }}'
@@ -60,102 +76,162 @@
     ownca_not_after: "+365d"
     ownca_not_before: "-1d"
 
-# # Consul Server
-# - name: Create Consul server private key
-#   community.crypto.openssl_privatekey:
-#     path: '.tmp/certs/consul/key.pem'
-#   register: consul_private_key
+# Consul Server
+- name: Create Consul server private key
+  community.crypto.openssl_privatekey:
+    path: '{{ certs_dir }}/consul/key.pem'
+  register: consul_private_key
 
-# - name: Create Consul certificate signing request
-#   community.crypto.openssl_csr:
-#     path: '.tmp/certs/consul/csr.pem'
-#     privatekey_path: '{{ consul_private_key.filename }}'
-#     subject_alt_name: '{{ consul_alt_names }}'
-#     extended_key_usage: [serverAuth, clientAuth]
-#   register: consul_csr
+- name: Create Consul certificate signing request
+  community.crypto.openssl_csr:
+    path: '{{ certs_dir }}/consul/csr.pem'
+    privatekey_path: '{{ consul_private_key.filename }}'
+    subject_alt_name:
+      - IP:127.0.0.1
+      - DNS:localhost
+      - DNS:server.dc1.consul
+      - DNS:consul.service.consul
+      - 'DNS:consul.{{ external_domain }}'
+      - 'IP:{{ hostvars["consul-server1"].ansible_host }}'
+      - 'IP:{{ hostvars["consul-server2"].ansible_host }}'
+      - 'IP:{{ hostvars["consul-server3"].ansible_host }}'
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  register: consul_csr
 
-# - name: Sign Consul client certificate
-#   community.crypto.x509_certificate:
-#     path: '.tmp/certs/consul/cert.pem'
-#     provider: ownca
-#     csr_path: '{{ consul_csr.filename }}'
-#     ownca_path: '{{ ca_certificate.filename }}'
-#     ownca_privatekey_path: '{{ ca_private_key.filename }}'
-#     ownca_not_after: "+3650d"
-#     ownca_not_before: "-1d"
+- name: Sign Consul client certificate
+  community.crypto.x509_certificate:
+    path: '{{ certs_dir }}/consul/cert.pem'
+    provider: ownca
+    csr_path: '{{ consul_csr.filename }}'
+    ownca_path: '{{ ca_certificate.filename }}'
+    ownca_privatekey_path: '{{ ca_private_key.filename }}'
+    ownca_not_after: "+1825d"
+    ownca_not_before: "-1d"
 
-# # Vault Server
-# - name: Create Vault server private key
-#   community.crypto.openssl_privatekey:
-#     path: '.tmp/certs/vault/key.pem'
-#   register: vault_private_key
+# Vault Server
+- name: Create Vault server private key
+  community.crypto.openssl_privatekey:
+    path: '{{ certs_dir }}/vault/key.pem'
+  register: vault_private_key
 
-# - name: Create Vault certificate signing request
-#   community.crypto.openssl_csr:
-#     path: '.tmp/certs/vault/csr.pem'
-#     privatekey_path: '{{ vault_private_key.filename }}'
-#     subject_alt_name: '{{ vault_alt_names }}'
-#     extended_key_usage: [serverAuth, clientAuth]
-#   register: vault_csr
+- name: Create Vault certificate signing request
+  community.crypto.openssl_csr:
+    path: '{{ certs_dir }}/vault/csr.pem'
+    privatekey_path: '{{ vault_private_key.filename }}'
+    subject_alt_name:
+      - IP:127.0.0.1
+      - DNS:localhost
+      - DNS:vault.service.consul
+      - DNS:active.vault.service.consul
+      - DNS:standby.vault.service.consul
+      - 'DNS:vault.{{ external_domain }}'
+      - 'IP:{{ hostvars["vault-server1"].ansible_host }}'
+      - 'IP:{{ hostvars["vault-server2"].ansible_host }}'
+      - 'IP:{{ hostvars["vault-server3"].ansible_host }}'
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  register: vault_csr
 
-# - name: Sign Vault client certificate
-#   community.crypto.x509_certificate:
-#     path: '.tmp/certs/vault/cert.pem'
-#     provider: ownca
-#     csr_path: '{{ vault_csr.filename }}'
-#     ownca_path: '{{ ca_certificate.filename }}'
-#     ownca_privatekey_path: '{{ ca_private_key.filename }}'
-#     ownca_not_after: "+3650d"
-#     ownca_not_before: "-1d"
+- name: Sign Vault client certificate
+  community.crypto.x509_certificate:
+    path: '{{ certs_dir }}/vault/cert.pem'
+    provider: ownca
+    csr_path: '{{ vault_csr.filename }}'
+    ownca_path: '{{ ca_certificate.filename }}'
+    ownca_privatekey_path: '{{ ca_private_key.filename }}'
+    ownca_not_after: "+1825d"
+    ownca_not_before: "-1d"
 
-# # Nomad Server
-# - name: Create Nomad server private key
-#   community.crypto.openssl_privatekey:
-#     path: '.tmp/certs/nomad/key.pem'
-#   register: nomad_private_key
+# Nomad Server
+- name: Create Nomad server private key
+  community.crypto.openssl_privatekey:
+    path: '{{ certs_dir }}/nomad/key.pem'
+  register: nomad_private_key
 
-# - name: Create Nomad certificate signing request
-#   community.crypto.openssl_csr:
-#     path: '.tmp/certs/nomad/csr.pem'
-#     privatekey_path: '{{ nomad_private_key.filename }}'
-#     subject_alt_name: '{{ nomad_alt_names }}'
-#     extended_key_usage: [serverAuth, clientAuth]
-#   register: nomad_csr
+- name: Create Nomad certificate signing request
+  community.crypto.openssl_csr:
+    path: '{{ certs_dir }}/nomad/csr.pem'
+    privatekey_path: '{{ nomad_private_key.filename }}'
+    subject_alt_name:
+      - IP:127.0.0.1
+      - DNS:localhost
+      - DNS:server.global.nomad
+      - DNS:nomad.service.consul
+      - 'DNS:nomad.{{ external_domain }}'
+      - 'IP:{{ hostvars["nomad-server1"].ansible_host }}'
+      - 'IP:{{ hostvars["nomad-server2"].ansible_host }}'
+      - 'IP:{{ hostvars["nomad-server3"].ansible_host }}'
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  register: nomad_csr
 
-# - name: Sign Nomad client certificate
-#   community.crypto.x509_certificate:
-#     path: '.tmp/certs/nomad/cert.pem'
-#     provider: ownca
-#     csr_path: '{{ nomad_csr.filename }}'
-#     ownca_path: '{{ ca_certificate.filename }}'
-#     ownca_privatekey_path: '{{ ca_private_key.filename }}'
-#     ownca_not_after: "+3650d"
-#     ownca_not_before: "-1d"
+- name: Sign Nomad certificate
+  community.crypto.x509_certificate:
+    path: '{{ certs_dir }}/nomad/cert.pem'
+    provider: ownca
+    csr_path: '{{ nomad_csr.filename }}'
+    ownca_path: '{{ ca_certificate.filename }}'
+    ownca_privatekey_path: '{{ ca_private_key.filename }}'
+    ownca_not_after: "+1825d"
+    ownca_not_before: "-1d"
 
-# # Nomad Client
-# - name: Create Nomad client private key
-#   community.crypto.openssl_privatekey:
-#     path: '.tmp/certs/nomad_client/private_key.pem'
-#   register: nomad_client_private_key
+# Nomad Client
+- name: Create Nomad client private key
+  community.crypto.openssl_privatekey:
+    path: '{{ certs_dir }}/nomad_client/key.pem'
+  register: nomad_client_private_key
 
-# - name: Create Nomad client certificate signing request
-#   community.crypto.openssl_csr:
-#     path: '.tmp/certs/nomad_client/csr.pem'
-#     privatekey_path: '{{ nomad_client_private_key.filename }}'
-#     subject_alt_name:
-#       - IP:127.0.0.1
-#       - DNS:localhost
-#       - DNS:client.global.nomad
-#     extended_key_usage:
-#       - clientAuth
-#   register: nomad_client_csr
+- name: Create Nomad client certificate signing request
+  community.crypto.openssl_csr:
+    path: '{{ certs_dir }}/nomad_client/csr.pem'
+    privatekey_path: '{{ nomad_client_private_key.filename }}'
+    subject_alt_name:
+      - IP:127.0.0.1
+      - DNS:localhost
+      - DNS:client.global.nomad
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  register: nomad_client_csr
 
-# - name: Sign Nomad client certificate
-#   community.crypto.x509_certificate:
-#     path: '.tmp/certs/nomad_client/cert.pem'
-#     provider: ownca
-#     csr_path: '{{ nomad_client_csr.filename }}'
-#     ownca_path: '{{ ca_certificate.filename }}'
-#     ownca_privatekey_path: '{{ ca_private_key.filename }}'
-#     ownca_not_after: "+3650d"
-#     ownca_not_before: "-1d"
+- name: Sign Nomad client certificate
+  community.crypto.x509_certificate:
+    path: '{{ certs_dir }}/nomad_client/cert.pem'
+    provider: ownca
+    csr_path: '{{ nomad_client_csr.filename }}'
+    ownca_path: '{{ ca_certificate.filename }}'
+    ownca_privatekey_path: '{{ ca_private_key.filename }}'
+    ownca_not_after: "+1825d"
+    ownca_not_before: "-1d"
+
+# HAProxy
+- name: Create HAProxy client private key
+  community.crypto.openssl_privatekey:
+    path: '{{ certs_dir }}/haproxy/key.pem'
+  register: haproxy_private_key
+
+- name: Create HAProxy client certificate signing request
+  community.crypto.openssl_csr:
+    path: '{{ certs_dir }}/haproxy/csr.pem'
+    privatekey_path: '{{ haproxy_private_key.filename }}'
+    subject_alt_name:
+      - 'DNS:*.{{ external_domain }}'
+      - 'DNS:*.{{ apps_subdomain }}.{{ external_domain }}'
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+  register: haproxy_csr
+
+- name: Sign HAProxy client certificate
+  community.crypto.x509_certificate:
+    path: '{{ certs_dir }}/haproxy/cert.pem'
+    provider: ownca
+    csr_path: '{{ haproxy_csr.filename }}'
+    ownca_path: '{{ ca_certificate.filename }}'
+    ownca_privatekey_path: '{{ ca_private_key.filename }}'
+    ownca_not_after: "+1825d"
+    ownca_not_before: "-1d"

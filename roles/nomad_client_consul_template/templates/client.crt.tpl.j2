@@ -1,6 +1,0 @@
-{{- with secret "pki/issue/nomad-cluster"
-    "ttl=24h"
-    "alt_names=[[ alt_names | default([]) | join(",") ]]"
-    "format=pem_bundle" -}}
-{{ .Data.certificate }}
-{{- end -}}
