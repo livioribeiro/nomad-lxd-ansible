@@ -1,9 +1,17 @@
 defaults
-  mode http
-  timeout client       60s
-  timeout connect      5s
-  timeout server       10s
-  timeout http-request 10s
+  mode    http
+  option  http-server-close
+  option  redispatch
+  option  contstats
+  option  forwardfor
+  timeout client          60s
+  timeout connect          5s
+  timeout server          25s
+  timeout tunnel        3600s
+  timeout http-keep-alive  1s
+  timeout http-request    15s
+  timeout queue           30s
+  timeout tarpit          60s
 
 frontend http
   bind :80
