@@ -129,13 +129,7 @@
       }
     cmd: VAULT_TOKEN={{ vault_root_token }} vault write -tls-skip-verify /auth/token/roles/nomad-cluster -
 
-- name: Check Vault Nomad token
-  ansible.builtin.stat:
-    path: /etc/nomad.d/vault_token.txt
-  register: check_vault_token
-
 - name: Create Vault Nomad token
-  when: not check_vault_token.stat.exists
   delegate_to: vault-server1
   ansible.builtin.shell:
     VAULT_TOKEN={{ vault_root_token }}
@@ -147,21 +141,11 @@
   register: vault_nomad_token
 
 - name: Save Vault Nomad token
-  when: not check_vault_token.stat.exists
-  ansible.builtin.copy:
-    content: '{{ "auth" | extract(vault_nomad_token.stdout | from_json, morekeys="client_token") }}'
-    dest: /etc/nomad.d/vault_token.txt
-    owner: nomad
-    mode: "0600"
-
-- name: Read Vault Nomad token
-  ansible.builtin.slurp:
-    src: /etc/nomad.d/vault_token.txt
-  register: read_vault_nomad_token
-
-- name: Read Nomad encrypt key
-  ansible.builtin.set_fact:
-    nomad_encrypt_key: '{{ lookup("file", ".tmp/encrypt_keys/nomad.txt") }}'
+  ansible.builtin.lineinfile:
+    path: /etc/nomad.d/nomad.env
+    regexp: '^VAULT_TOKEN='
+    line: 'VAULT_TOKEN={{ "auth" | extract(vault_nomad_token.stdout | from_json, morekeys="client_token") }}'
+  notify: Restart Nomad
 
 - name: Copy Nomad config
   ansible.builtin.template:
@@ -170,6 +154,6 @@
     owner: nomad
     mode: "0644"
   vars:
+    nomad_encrypt_key: '{{ lookup("file", ".tmp/encrypt_keys/nomad.txt") }}'
     consul_token: '{{ read.consul_token.content | b64decode }}'
-    vault_token: '{{ read_vault_nomad_token.content | b64decode }}'
   notify: Restart Nomad

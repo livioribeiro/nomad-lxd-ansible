@@ -5,7 +5,7 @@ variable "version" {
 
 variable "namespace" {
   type    = string
-  default = "system-scm"
+  default = "scm"
 }
 
 variable "gitea_host" {
@@ -23,12 +23,12 @@ variable "database_volume_name" {
   default = "scm-database-data"
 }
 
-job "scm" {
+job "gitea" {
   datacenters = ["apps"]
   type        = "service"
   namespace   = var.namespace
 
-  group "gitea" {
+  group "app" {
     count = 1
 
     update {
@@ -66,7 +66,7 @@ job "scm" {
 
           proxy {
             upstreams {
-              destination_name = "scm-database"
+              destination_name = "gitea-database"
               local_bind_port  = 5432
             }
           }
@@ -128,7 +128,7 @@ job "scm" {
         GITEA__security__INTERNAL_TOKEN = "gitea_internal_token"
         GITEA__security__SECRET_KEY     = "gitea_secret_key"
         GITEA__database__DB_TYPE        = "postgres"
-        GITEA__database__HOST           = "${NOMAD_UPSTREAM_ADDR_scm-database}"
+        GITEA__database__HOST           = "${NOMAD_UPSTREAM_ADDR_gitea-database}"
         GITEA__database__NAME           = "gitea"
         GITEA__database__USER           = "gitea"
         GITEA__database__PASSWD         = "gitea"
