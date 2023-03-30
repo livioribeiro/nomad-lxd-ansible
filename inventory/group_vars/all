@@ -1,4 +1,10 @@
 ---
+ansible_python_interpreter: /usr/bin/python3
+ansible_user: ubuntu
+ansible_ssh_private_key_file: .tmp/ssh/id_rsa
+ansible_ssh_common_args: -o StrictHostKeyChecking=no
+ansible_become: true
+
 gateway_address: '10.99.0.1'
 ubuntu_version: jammy
 external_domain: 10.99.0.1.nip.io

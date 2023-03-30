@@ -18,7 +18,7 @@ variable "vault_token" {
   default = ""
 }
 
-job "metrics" {
+job "prometheus" {
   datacenters = ["infra", "apps"]
   type        = "service"
   namespace   = var.namespace
@@ -84,9 +84,41 @@ job "metrics" {
         CONSUL_ADDR = "${attr.unique.network.ip-address}:8500"
       }
 
-      template {
-        destination = "local/prometheus.yml"
+      vault {
+        change_mode   = "signal"
+        change_signal = "SIGHUP"
+        policies      = ["tls-policy"]
+      }
 
+      template {
+        destination = "secrets/ca.pem"
+        data = <<-EOT
+          {{ with secret "pki/issue/nomad-cluster" "ttl=24h" "format=pem_bundle" }}
+          {{- .Data.issuing_ca -}}
+          {{ end }}
+        EOT
+      }
+
+      template {
+        destination = "secrets/cert.pem"
+        data = <<-EOT
+          {{ with secret "pki/issue/nomad-cluster" "ttl=24h" "format=pem_bundle" }}
+          {{- .Data.certificate -}}
+          {{ end }}
+        EOT
+      }
+
+      template {
+        destination = "secrets/key.pem"
+        data = <<-EOT
+          {{ with secret "pki/issue/nomad-cluster" "ttl=24h" "format=pem_bundle" }}
+          {{- .Data.private_key -}}
+          {{ end }}
+        EOT
+      }
+
+      template {
+        destination   = "local/prometheus.yml"
         data = <<EOT
 # Source:
 # https://learn.hashicorp.com/tutorials/nomad/prometheus-metrics
@@ -100,18 +132,21 @@ scrape_configs:
   # CONSUL
   - job_name: consul_metrics
     consul_sd_configs:
-    - server: '{{ env "CONSUL_ADDR" }}:8500'
+    - server: '{{ env "attr.unique.network.ip-address" }}:8500'
       token: '${var.consul_acl_token}'
       services: [consul]
+
+    tls_config:
+      insecure_skip_verify: true
+      # ca_file: /secrets/ca.pem
+      cert_file: /secrets/cert.pem
+      key_file: /secrets/key.pem
 
     scrape_interval: 5s
     metrics_path: /v1/agent/metrics
     scheme: https
     params:
       format: [prometheus]
-
-    tls_config:
-      insecure_skip_verify: true
 
     relabel_configs:
     - source_labels: [__address__]
@@ -125,7 +160,7 @@ scrape_configs:
     - server: '{{ env "attr.unique.network.ip-address" }}:8500'
       token: '${var.consul_acl_token}'
       services: [vault]
-      tags: [active]
+      # tags: [active]
 
     scrape_interval: 5s
     metrics_path: /v1/sys/metrics
@@ -145,6 +180,9 @@ scrape_configs:
 
     tls_config:
       insecure_skip_verify: true
+      # ca_file: /secrets/ca.pem
+      cert_file: /secrets/cert.pem
+      key_file: /secrets/key.pem
 
     relabel_configs:
     - source_labels: ['__meta_consul_tags']

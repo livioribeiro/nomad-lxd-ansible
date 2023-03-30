@@ -18,7 +18,7 @@ variable "consul_acl_token" {
   default = ""
 }
 
-job "gateway" {
+job "traefik" {
   datacenters = ["infra"]
   type        = "system"
   namespace   = var.namespace
@@ -85,7 +85,7 @@ providers:
   consulCatalog:
     exposedByDefault: false
     defaultRule: "Host(`{{ normalize .Name }}.${var.proxy_suffix}`)"
-    connectAware: false
+    connectAware: true
     endpoint:
       token: "${var.consul_acl_token}"
 

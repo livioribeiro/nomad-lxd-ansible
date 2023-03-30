@@ -1,16 +1,24 @@
 ---
-- name: Generate certs
-  hosts: localhost
-  connection: local
-  roles:
-    - certs
-    - encrypt_keys
-
-- name: Servers deployment
+- name: Generate certificates
   hosts: localhost
   connection: local
   tasks:
-    - ansible.builtin.import_tasks: containers.yml
+    - name: Generate certificates
+      ansible.builtin.import_tasks: tasks/certs.yml
+
+- name: Generate encryption keys
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Generate encryption keys
+      ansible.builtin.import_tasks: tasks/encrypt_keys.yml
+
+- name: Deploy servers
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Deploy servers
+      ansible.builtin.import_tasks: tasks/servers.yml
 
 - name: Wait for servers to be ready
   hosts: localhost
@@ -39,6 +47,7 @@
     - ca_cert
     - hashicorp_apt
     - consul_client
+    - consul_dns
     - vault_server
 
 - name: Initialize Vault
@@ -62,6 +71,7 @@
     - ca_cert
     - hashicorp_apt
     - consul_client
+    - consul_dns
     - nomad_server
 
 - name: Initialize Nomad acl
@@ -84,7 +94,6 @@
   hosts: nomad_clients
   roles:
     - ca_cert
-    - hashicorp_apt
     - consul_client
     - nomad_client
 

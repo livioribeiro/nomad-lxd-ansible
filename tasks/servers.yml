@@ -1,4 +1,28 @@
 ---
+- name: Create ssh keys directory
+  ansible.builtin.file:
+    path: .tmp/ssh
+    state: directory
+
+- name: Create ssh key
+  community.crypto.openssh_keypair:
+    path: .tmp/ssh/id_rsa
+  register: ssh_key
+
+- name: Create Nomad client image
+  when: >-
+    lookup("file", ".tmp/nomad-client.pkr.hcl.hash", errors="ignore")
+    !=
+    (lookup("file", "packer/nomad-client.pkr.hcl") | hash("sha1"))
+  ansible.builtin.command:
+    chdir: packer
+    cmd: packer build -color=false nomad-client.pkr.hcl
+
+- name: Create packer file hash
+  ansible.builtin.copy:
+    content: '{{ lookup("file", "packer/nomad-client.pkr.hcl") | hash("sha1") }}'
+    dest: .tmp/nomad-client.pkr.hcl.hash
+
 - name: Create nomad network
   ansible.builtin.command:
     lxc network create lxdnomadbr0 --type bridge ipv4.address=10.99.0.1/16 ipv4.nat=true ipv6.address=none
@@ -19,16 +43,6 @@
         type: disk
         pool: default
         path: /
-
-- name: Create ssh keys directory
-  ansible.builtin.file:
-    path: .tmp/ssh
-    state: directory
-
-- name: Create ssh key
-  community.crypto.openssh_keypair:
-    path: .tmp/ssh/id_rsa
-  register: ssh_key
 
 - name: Create servers
   loop: '{{ groups["consul_servers"] + groups["vault_servers"] + groups["nomad_servers"] }}'
@@ -53,40 +67,6 @@
 
         packages:
           - openssh-server
-      cloud-init.network-config: |
-        version: 2
-        ethernets:
-          eth0:
-            addresses:
-              - {{ hostvars[item].ansible_host }}/16
-            routes:
-              - to: default
-                via: {{ gateway_address }}
-            nameservers:
-              addresses:
-                - 9.9.9.9
-                - 149.112.112.112
-
-- name: Create nomad clients
-  loop: '{{ groups["nomad_infra_clients"] + groups["nomad_apps_clients"] }}'
-  community.general.lxd_container:
-    name: '{{ hostvars[item].inventory_hostname }}'
-    profiles:
-      - nomad
-    state: started
-    wait_for_container: true
-    wait_for_ipv4_addresses: true
-    source: *container_image_source
-    config:
-      cloud-init.user-data: *cloud_init
-      limits.cpu: '1'
-      limits.memory: 4GB
-      security.nesting: 'true'
-      security.privileged: 'true'
-      raw.lxc: |-
-        lxc.apparmor.profile=unconfined
-        lxc.cgroup.devices.allow=a
-        lxc.cap.drop=
       cloud-init.network-config: |
         version: 2
         ethernets:
@@ -161,3 +141,41 @@
         type: proxy
         listen: tcp:0.0.0.0:443
         connect: tcp:127.0.0.1:443
+
+
+- name: Create nomad clients
+  loop: '{{ groups["nomad_infra_clients"] + groups["nomad_apps_clients"] }}'
+  community.general.lxd_container:
+    name: '{{ hostvars[item].inventory_hostname }}'
+    profiles:
+      - nomad
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source:
+      type: image
+      mode: local
+      alias: nomad-client
+    config:
+      cloud-init.user-data: *cloud_init
+      limits.cpu: '1'
+      limits.memory: 4GB
+      security.nesting: 'true'
+      security.privileged: 'true'
+      raw.lxc: |-
+        lxc.apparmor.profile=unconfined
+        lxc.cgroup.devices.allow=a
+        lxc.cap.drop=
+      cloud-init.network-config: |
+        version: 2
+        ethernets:
+          eth0:
+            addresses:
+              - {{ hostvars[item].ansible_host }}/16
+            routes:
+              - to: default
+                via: {{ gateway_address }}
+            nameservers:
+              addresses:
+                - 9.9.9.9
+                - 149.112.112.112

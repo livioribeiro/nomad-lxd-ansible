@@ -57,20 +57,6 @@ resource "nomad_job" "prometheus" {
   }
 }
 
-resource "nomad_job" "statsd_exporter" {
-  depends_on = [nomad_job.docker_registry]
-
-  jobspec = file("${path.module}/jobs/statsd-exporter.nomad.hcl")
-  # detach = false
-
-  hcl2 {
-    enabled = true
-    vars = {
-      namespace = nomad_namespace.system_monitoring.name
-    }
-  }
-}
-
 resource "nomad_job" "loki" {
   jobspec = file("${path.module}/jobs/loki.nomad.hcl")
   # detach = false

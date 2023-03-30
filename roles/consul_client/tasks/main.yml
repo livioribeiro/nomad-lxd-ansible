@@ -34,7 +34,3 @@
     owner: consul
     mode: "0600"
   notify: Restart Consul
-
-- name: Setup Consul DNS
-  ansible.builtin.import_role:
-    name: consul_dns

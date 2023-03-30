@@ -1,8 +1,0 @@
----
-cni_plugins_version: '1.2.0'
-cni_plugins_archive: 'cni-plugins-linux-amd64-v{{ cni_plugins_version }}'
-cni_plugins_url: 'https://github.com/containernetworking/plugins/releases/download/v{{ cni_plugins_version }}/{{ cni_plugins_archive }}.tgz'
-envoy_gpg_url: 'https://deb.dl.getenvoy.io/public/gpg.8115BA8E629CC074.key'
-envoy_repo: 'deb [arch=amd64] https://deb.dl.getenvoy.io/public/deb/ubuntu {{ ubuntu_version }} main'
-docker_gpg_url: https://download.docker.com/linux/ubuntu/gpg
-docker_repo: 'deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ubuntu_version }} stable'

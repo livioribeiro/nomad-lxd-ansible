@@ -54,10 +54,10 @@ acl {
 
 ui_config {
   enabled          = true
-  # metrics_provider = "prometheus"
-  # metrics_proxy {
-  #   base_url = "http://prometheus.service.consul:9090"
-  # }
+  metrics_provider = "prometheus"
+  metrics_proxy {
+    base_url = "http://prometheus.service.consul:9090"
+  }
 }
 
 telemetry {
@@ -72,7 +72,7 @@ config_entries {
       Kind = "proxy-defaults"
       Name = "global"
       Config {
-        envoy_statsd_url = "udp://172.17.0.1:9125"
+        envoy_prometheus_bind_addr = "0.0.0.0:9102"
       }
     }
   ]

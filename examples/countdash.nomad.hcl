@@ -4,6 +4,7 @@ job "countdash" {
   group "api" {
     network {
       mode = "bridge"
+
       port "envoy_metrics" {
         to = 9102
       }
@@ -35,7 +36,7 @@ job "countdash" {
       }
     }
 
-    task "web" {
+    task "api" {
       driver = "docker"
 
       config {
@@ -56,6 +57,7 @@ job "countdash" {
   group "dashboard" {
     network {
       mode = "bridge"
+
       port "http" {}
     }
 

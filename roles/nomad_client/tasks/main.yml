@@ -1,25 +1,4 @@
 ---
-- name: Install nfs-common
-  ansible.builtin.apt:
-    name: nfs-common
-    state: present
-
-- name: Add envoy apt key
-  ansible.builtin.apt_key:
-    url: "{{ envoy_gpg_url }}"
-    state: present
-
-- name: Add envoy apt repository
-  ansible.builtin.apt_repository:
-    repo: "{{ envoy_repo }}"
-    state: present
-
-- name: Install envoy
-  ansible.builtin.apt:
-    name: getenvoy-envoy
-    state: present
-    update_cache: true
-
 - name: Make / shared
   ansible.builtin.command: mount --make-shared /
 
@@ -28,22 +7,6 @@
     name: make / shared at startup
     special_time: reboot
     job: mount --make-shared /
-
-- name: Add docker apt key
-  ansible.builtin.apt_key:
-    url: "{{ docker_gpg_url }}"
-    state: present
-
-- name: Add docker apt repository
-  ansible.builtin.apt_repository:
-    repo: "{{ docker_repo }}"
-    state: present
-
-- name: Install docker
-  ansible.builtin.apt:
-    name: docker-ce
-    state: present
-    update_cache: true
 
 - name: Copy docker consul resolved config
   ansible.builtin.copy:
@@ -59,25 +22,6 @@
     owner: root
     mode: "0600"
   notify: Restart docker
-
-# - name: Install openjdk
-#   ansible.builtin.apt:
-#     name: openjdk-17-jdk-headless
-#     state: present
-
-- name: Create cni plugins directory
-  ansible.builtin.file:
-    path: /opt/cni/bin
-    state: directory
-    mode: "0755"
-
-- name: Install cni plugins
-  ansible.builtin.unarchive:
-    src: "{{ cni_plugins_url }}"
-    remote_src: true
-    dest: /opt/cni/bin/
-    mode: "0755"
-    creates: /opt/cni/bin/bridge
 
 - name: Create Consul client Nomad token
   run_once: true
@@ -103,23 +47,6 @@
       key_prefix "" {
         policy = "read"
       }
-
-- name: Install Nomad
-  ansible.builtin.apt:
-    name: nomad
-    state: present
-    update_cache: true
-
-- name: Copy Nomad client certs
-  loop:
-    - cert
-    - key
-  ansible.builtin.copy:
-    src: '.tmp/certs/nomad_client/{{ item }}.pem'
-    dest: /etc/certs.d/
-    owner: nomad
-    group: nomad
-    mode: "0600"
 
 - name: Copy nomad config
   ansible.builtin.template:
