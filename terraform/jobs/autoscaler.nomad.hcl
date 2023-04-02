@@ -5,32 +5,12 @@ variable "version" {
 
 variable "namespace" {
   type    = string
-  default = "system-autoscaling"
+  default = "system-monitoring"
 }
 
 variable "promtail_version" {
   type    = string
-  default = "2.7.2"
-}
-
-variable "ca_cert" {
-  type    = string
-  default = ""
-}
-
-variable "client_cert" {
-  type    = string
-  default = ""
-}
-
-variable "client_key" {
-  type    = string
-  default = ""
-}
-
-variable "nomad_token" {
-  type    = string
-  default = ""
+  default = "2.7.5"
 }
 
 job "autoscaler" {
@@ -106,6 +86,10 @@ job "autoscaler" {
     task "autoscaler" {
       driver = "docker"
 
+      identity {
+        env = true
+      }
+
       config {
         image   = "hashicorp/nomad-autoscaler:${var.version}"
         command = "nomad-autoscaler"
@@ -136,52 +120,75 @@ job "autoscaler" {
       # }
 
       resources {
-        cpu    = 50
+        cpu    = 100
         memory = 128
+      }
+
+      vault {
+        change_mode   = "signal"
+        change_signal = "SIGHUP"
+        policies      = ["tls-policy"]
       }
 
       template {
         destination = "${NOMAD_SECRETS_DIR}/ca.pem"
-        data        = var.ca_cert
+        data = <<-EOT
+          {{ with secret "pki/issue/nomad-cluster" "ttl=24h" "format=pem_bundle" }}
+          {{- .Data.issuing_ca -}}
+          {{ end }}
+        EOT
       }
 
       template {
         destination = "${NOMAD_SECRETS_DIR}/cert.pem"
-        data        = var.client_cert
+        data = <<-EOT
+          {{ with secret "pki/issue/nomad-cluster" "ttl=24h" "format=pem_bundle" }}
+          {{- .Data.certificate -}}
+          {{ end }}
+        EOT
       }
 
       template {
-        destination = "${NOMAD_SECRETS_DIR}/private_key.pem"
-        data        = var.client_key
+        destination = "${NOMAD_SECRETS_DIR}/key.pem"
+        data = <<-EOT
+          {{ with secret "pki/issue/nomad-cluster" "ttl=24h" "format=pem_bundle" }}
+          {{- .Data.private_key -}}
+          {{ end }}
+        EOT
       }
 
       template {
         destination = "${NOMAD_TASK_DIR}/config.hcl"
-        data = <<EOT
-nomad {
-  address     = "https://nomad.service.consul:4646"
-  token       = "${var.nomad_token}"
-  ca_cert     = "{{ env "NOMAD_SECRETS_DIR" }}/ca.pem"
-  client_cert = "{{ env "NOMAD_SECRETS_DIR" }}/cert.pem"
-  client_key  = "{{ env "NOMAD_SECRETS_DIR" }}/private_key.pem"
-}
+        data = <<-EOT
+          nomad {
+            address     = "https://nomad.service.consul:4646"
+            token       = "{{ env "NOMAD_TOKEN" }}"
+            # ca_cert     = "{{ env "NOMAD_SECRETS_DIR" }}/ca.pem"
+            skip_verify = true
+            client_cert = "{{ env "NOMAD_SECRETS_DIR" }}/cert.pem"
+            client_key  = "{{ env "NOMAD_SECRETS_DIR" }}/key.pem"
+          }
 
-telemetry {
-  prometheus_metrics = true
-  disable_hostname   = true
-}
+          telemetry {
+            prometheus_metrics = true
+            disable_hostname   = true
+          }
 
-apm "prometheus" {
-  driver = "prometheus"
-  config = {
-    address = "http://{{ env "NOMAD_UPSTREAM_ADDR_prometheus" }}"
-  }
-}
+          apm "prometheus" {
+            driver = "prometheus"
+            config = {
+              address = "http://{{ env "NOMAD_UPSTREAM_ADDR_prometheus" }}"
+            }
+          }
 
-strategy "target-value" {
-  driver = "target-value"
-}
-EOT
+          strategy "target-value" {
+            driver = "target-value"
+          }
+
+          strategy "threshold" {
+            driver = "threshold"
+          }
+        EOT
       }
     }
 

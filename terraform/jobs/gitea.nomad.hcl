@@ -20,7 +20,7 @@ variable "data_volume_name" {
 
 variable "database_volume_name" {
   type    = string
-  default = "scm-database-data"
+  default = "gitea-database-data"
 }
 
 job "gitea" {
@@ -204,7 +204,7 @@ job "gitea" {
 
       volume_mount {
         volume      = "data"
-        destination = "/var/lib/postgresql/data/pgdata"
+        destination = "/var/lib/postgresql/data"
       }
 
       resources {

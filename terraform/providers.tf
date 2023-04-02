@@ -1,6 +1,6 @@
 terraform {
   backend "consul" {
-    path    = "terraform/nomad-cluster"
+    path = "terraform/nomad-cluster"
   }
 
   required_providers {
@@ -15,27 +15,27 @@ terraform {
     }
 
     vault = {
-      source = "hashicorp/vault"
+      source  = "hashicorp/vault"
       version = "3.13.0"
     }
   }
 }
 
 provider "consul" {
-  address  = var.consul_address
-  scheme   = var.consul_scheme
-  token    = var.consul_token
-  ca_pem   = var.ca_cert
-  cert_pem = var.client_cert
-  key_pem  = var.client_key
+  address   = var.consul_address
+  scheme    = var.consul_scheme
+  token     = var.consul_token
+  ca_file   = "../.tmp/certs/ca/cert.pem"
+  cert_file = "../.tmp/certs/client/cert.pem"
+  key_file  = "../.tmp/certs/client/key.pem"
 }
 
 provider "nomad" {
-  address   = var.nomad_address
-  secret_id = var.nomad_secret_id
-  ca_pem    = var.ca_cert
-  cert_pem  = var.client_cert
-  key_pem   = var.client_key
+  address    = var.nomad_address
+  secret_id  = var.nomad_secret_id
+  ca_file    = "../.tmp/certs/ca/cert.pem"
+  cert_file  = "../.tmp/certs/client/cert.pem"
+  key_file   = "../.tmp/certs/client/key.pem"
 }
 
 provider "vault" {

@@ -10,10 +10,6 @@ variable "apps_subdomain" {
   type = string
 }
 
-variable "ca_cert" {
-  type = string
-}
-
 variable "consul_address" {
   type = string
 }
@@ -41,19 +37,3 @@ variable "vault_address" {
 variable "vault_token" {
   type = string
 }
-
-variable "client_cert" {
-  type = string
-}
-
-variable "client_key" {
-  type = string
-}
-
-# variable "nomad_autoscaler_cert" {
-#   type = string
-# }
-
-# variable "nomad_autoscaler_key" {
-#   type = string
-# }

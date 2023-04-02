@@ -113,13 +113,10 @@
           nfs_server_host: '{{ hostvars["nfs-server"].ansible_host }}'
           external_domain: '{{ external_domain }}'
           apps_subdomain: '{{ apps_subdomain }}'
-          ca_cert: '{{ lookup("file", ".tmp/certs/ca/cert.pem") }}'
           consul_address: '{{ hostvars["consul-server1"].ansible_host }}:8501'
           consul_scheme: https
           consul_token: '{{ lookup("file", ".tmp/root_token_consul.txt") }}'
           nomad_address: 'https://{{ hostvars["nomad-server1"].ansible_host }}:4646'
           nomad_secret_id: '{{ lookup("file", ".tmp/root_token_nomad.txt") }}'
-          client_cert: '{{ lookup("file", ".tmp/certs/client/cert.pem") }}'
-          client_key: '{{ lookup("file", ".tmp/certs/client/key.pem") }}'
           vault_address: 'https://{{ hostvars["vault-server1"].ansible_host }}:8200'
           vault_token: '{{ lookup("file", ".tmp/root_token_vault.txt") }}'

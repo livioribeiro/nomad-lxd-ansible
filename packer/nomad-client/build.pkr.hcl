@@ -9,7 +9,7 @@ packer {
 
 variable "ssh_key_file" {
   type    = string
-  default = "../.tmp/ssh/id_rsa.pub"
+  default = "../../.tmp/ssh/id_rsa.pub"
 }
 
 variable "ubuntu_version" {
@@ -41,7 +41,7 @@ build {
   }
 
   provisioner "file" {
-    source      = "../roles/consul_dns/files/consul.conf"
+    source      = "../../roles/consul_dns/files/consul.conf"
     destination = "/tmp/consul-dns.conf"
   }
 
@@ -62,14 +62,14 @@ build {
   }
 
   provisioner "file" {
-    source      = "../.tmp/certs/ca/cert.pem"
+    source      = "../../.tmp/certs/ca/cert.pem"
     destination = "/etc/certs.d/ca.pem"
   }
 
   provisioner "file" {
     sources = [
-      "../.tmp/certs/nomad_client/cert.pem",
-      "../.tmp/certs/nomad_client/key.pem",
+      "../../.tmp/certs/nomad_client/cert.pem",
+      "../../.tmp/certs/nomad_client/key.pem",
     ]
     destination = "/etc/certs.d/"
   }

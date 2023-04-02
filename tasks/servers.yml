@@ -3,25 +3,43 @@
   ansible.builtin.file:
     path: .tmp/ssh
     state: directory
+    mode: "0755"
 
 - name: Create ssh key
   community.crypto.openssh_keypair:
     path: .tmp/ssh/id_rsa
   register: ssh_key
 
+- name: Create Packer tmp directory
+  ansible.builtin.file:
+    path: .tmp/packer
+    state: directory
+    mode: "0755"
+
+- name: Check Nomad client image
+  ansible.builtin.command: lxc image list -c l
+  register: nomad_client_image
+  changed_when: false
+
+- name: Check Nomad packer build
+  ansible.builtin.set_fact:
+    nomad_client_packer_old_hash: '{{ lookup("file", ".tmp/packer/nomad-client.hash", errors="ignore") }}'
+    nomad_client_packer_new_hash: '{{ lookup("file", "packer/nomad-client/build.pkr.hcl") | hash("sha1") }}'
+
 - name: Create Nomad client image
   when: >-
-    lookup("file", ".tmp/nomad-client.pkr.hcl.hash", errors="ignore")
-    !=
-    (lookup("file", "packer/nomad-client.pkr.hcl") | hash("sha1"))
+    ("nomad-client" not in nomad_client_image.stdout)
+    or
+    (nomad_client_packer_old_hash != nomad_client_packer_new_hash)
   ansible.builtin.command:
-    chdir: packer
-    cmd: packer build -color=false nomad-client.pkr.hcl
+    chdir: packer/nomad-client
+    cmd: packer build -color=false build.pkr.hcl
 
 - name: Create packer file hash
   ansible.builtin.copy:
-    content: '{{ lookup("file", "packer/nomad-client.pkr.hcl") | hash("sha1") }}'
-    dest: .tmp/nomad-client.pkr.hcl.hash
+    content: '{{ lookup("file", "packer/nomad-client/build.pkr.hcl") | hash("sha1") }}'
+    dest: .tmp/packer/nomad-client.hash
+    mode: "0644"
 
 - name: Create nomad network
   ansible.builtin.command:

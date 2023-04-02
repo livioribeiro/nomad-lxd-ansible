@@ -31,7 +31,7 @@ resource "nomad_job" "ldap" {
   depends_on = [nomad_job.docker_registry]
 
   jobspec = file("${path.module}/jobs/openldap.nomad.hcl")
-  detach = false
+  detach  = false
 
   hcl2 {
     enabled = true

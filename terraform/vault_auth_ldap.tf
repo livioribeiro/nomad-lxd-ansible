@@ -1,3 +1,27 @@
+resource "vault_policy" "nomad_admin" {
+  name = "nomad-admin"
+
+  policy = <<-EOT
+    path "secret/nomad/*" {
+      capabilities = ["create", "read", "update", "patch", "delete", "list"]
+    }
+  EOT
+}
+
+resource "vault_policy" "nomad_operator" {
+  name = "nomad-operator"
+
+  policy = <<-EOT
+    path "secret/nomad/jobs/*" {
+      capabilities = ["create", "read", "update", "patch", "delete", "list"]
+    }
+
+    path "secret/nomad/jobs/system-*" {
+      capabilities = ["deny"]
+    }
+  EOT
+}
+
 resource "vault_ldap_auth_backend" "ldap" {
   depends_on = [
     nomad_job.ldap
@@ -12,13 +36,15 @@ resource "vault_ldap_auth_backend" "ldap" {
 }
 
 resource "vault_identity_group" "admin" {
-  name = "admin"
-  type = "external"
+  name     = "admin"
+  type     = "external"
+  policies = [vault_policy.nomad_admin.name]
 }
 
 resource "vault_identity_group" "operator" {
-  name = "operator"
-  type = "external"
+  name     = "operator"
+  type     = "external"
+  policies = [vault_policy.nomad_operator.name]
 }
 
 resource "vault_identity_group_alias" "admin" {
@@ -34,8 +60,8 @@ resource "vault_identity_group_alias" "operator" {
 }
 
 resource "vault_identity_oidc_assignment" "nomad" {
-  name       = "nomad"
-  group_ids  = [
+  name      = "nomad"
+  group_ids = [
     vault_identity_group.admin.id,
     vault_identity_group.operator.id,
   ]
@@ -54,7 +80,7 @@ resource "vault_identity_oidc_key" "nomad" {
 }
 
 resource "vault_identity_oidc_client" "nomad" {
-  name          = "nomad"
+  name = "nomad"
   redirect_uris = [
     "http://localhost:4649/oidc/callback",
     "http://nomad.${var.external_domain}/ui/settings/tokens",
@@ -74,11 +100,13 @@ resource "vault_identity_oidc_scope" "groups" {
 }
 
 resource "vault_identity_oidc_provider" "nomad" {
-  name = "nomad"
+  name        = "nomad"
   issuer_host = "vault.${var.external_domain}"
+
   allowed_client_ids = [
     vault_identity_oidc_client.nomad.client_id
   ]
+
   scopes_supported = [
     vault_identity_oidc_scope.groups.name
   ]

@@ -27,15 +27,15 @@ resource "nomad_external_volume" "gitea_data" {
   }
 }
 
-resource "nomad_external_volume" "scm_database_data" {
+resource "nomad_external_volume" "gitea_database_data" {
   depends_on = [
     data.nomad_plugin.nfs,
   ]
 
   type         = "csi"
   plugin_id    = "nfs"
-  volume_id    = "scm-database-data"
-  name         = "scm-database-data"
+  volume_id    = "gitea-database-data"
+  name         = "gitea-database-data"
   namespace    = nomad_namespace.system_scm.name
   capacity_min = "250MiB"
   capacity_max = "500MiB"
@@ -44,9 +44,15 @@ resource "nomad_external_volume" "scm_database_data" {
     access_mode     = "single-node-writer"
     attachment_mode = "file-system"
   }
+
+  parameters = {
+    uid  = "70"
+    gid  = "70"
+    mode = "700"
+  }
 }
 
-resource "nomad_job" "scm" {
+resource "nomad_job" "gitea" {
   depends_on = [nomad_job.docker_registry]
 
   jobspec = file("${path.module}/jobs/gitea.nomad.hcl")
@@ -57,15 +63,15 @@ resource "nomad_job" "scm" {
     vars = {
       namespace            = nomad_namespace.system_scm.name
       data_volume_name     = nomad_external_volume.gitea_data.name
-      database_volume_name = nomad_external_volume.scm_database_data.name
+      database_volume_name = nomad_external_volume.gitea_database_data.name
       gitea_host           = "gitea.${var.apps_subdomain}.${var.external_domain}"
     }
   }
 }
 
-resource "consul_config_entry" "scm_database_intention" {
+resource "consul_config_entry" "gitea_database_intention" {
   kind = "service-intentions"
-  name = "scm-database"
+  name = "gitea-database"
 
   config_json = jsonencode({
     Sources = [

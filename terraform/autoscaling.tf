@@ -25,10 +25,34 @@
 #     enabled = true
 #     vars = {
 #       namespace   = nomad_namespace.system_autoscaling.name
-#       ca_cert     = var.ca_cert
-#       client_cert = var.nomad_autoscaler_cert
-#       client_key  = var.nomad_autoscaler_key
-#       nomad_token = nomad_acl_token.nomad_autoscaler.secret_id
 #     }
 #   }
+# }
+
+# resource "consul_config_entry" "nomad_autoscaler_intention" {
+#   kind = "service-intentions"
+#   name = "prometheus"
+
+#   config_json = jsonencode({
+#     Sources = [
+#       {
+#         Name   = "autoscaler"
+#         Action = "allow"
+#       }
+#     ]
+#   })
+# }
+
+# resource "consul_config_entry" "nomad_autoscaler_promtail_intention" {
+#   kind = "service-intentions"
+#   name = "loki"
+
+#   config_json = jsonencode({
+#     Sources = [
+#       {
+#         Name   = "autoscaler-promtail"
+#         Action = "allow"
+#       }
+#     ]
+#   })
 # }

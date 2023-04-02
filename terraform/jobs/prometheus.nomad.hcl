@@ -1,6 +1,6 @@
 variable "version" {
   type    = string
-  default = "v2.42.0"
+  default = "v2.43.0"
 }
 
 variable "namespace" {
@@ -91,7 +91,7 @@ job "prometheus" {
       }
 
       template {
-        destination = "secrets/ca.pem"
+        destination = "${NOMAD_SECRETS_DIR}/ca.pem"
         data = <<-EOT
           {{ with secret "pki/issue/nomad-cluster" "ttl=24h" "format=pem_bundle" }}
           {{- .Data.issuing_ca -}}
@@ -100,7 +100,7 @@ job "prometheus" {
       }
 
       template {
-        destination = "secrets/cert.pem"
+        destination = "${NOMAD_SECRETS_DIR}/cert.pem"
         data = <<-EOT
           {{ with secret "pki/issue/nomad-cluster" "ttl=24h" "format=pem_bundle" }}
           {{- .Data.certificate -}}
@@ -109,7 +109,7 @@ job "prometheus" {
       }
 
       template {
-        destination = "secrets/key.pem"
+        destination = "${NOMAD_SECRETS_DIR}/key.pem"
         data = <<-EOT
           {{ with secret "pki/issue/nomad-cluster" "ttl=24h" "format=pem_bundle" }}
           {{- .Data.private_key -}}
@@ -138,9 +138,9 @@ scrape_configs:
 
     tls_config:
       insecure_skip_verify: true
-      # ca_file: /secrets/ca.pem
-      cert_file: /secrets/cert.pem
-      key_file: /secrets/key.pem
+      # ca_file: {{ env "NOMAD_SECRETS_DIR" }}/ca.pem
+      cert_file: {{ env "NOMAD_SECRETS_DIR" }}/cert.pem
+      key_file: {{ env "NOMAD_SECRETS_DIR" }}/key.pem
 
     scrape_interval: 5s
     metrics_path: /v1/agent/metrics
@@ -180,9 +180,9 @@ scrape_configs:
 
     tls_config:
       insecure_skip_verify: true
-      # ca_file: /secrets/ca.pem
-      cert_file: /secrets/cert.pem
-      key_file: /secrets/key.pem
+      # ca_file: {{ env "NOMAD_SECRETS_DIR" }}/ca.pem
+      cert_file: {{ env "NOMAD_SECRETS_DIR" }}/cert.pem
+      key_file: {{ env "NOMAD_SECRETS_DIR" }}/key.pem
 
     relabel_configs:
     - source_labels: ['__meta_consul_tags']

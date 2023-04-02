@@ -10,6 +10,26 @@ job "countdash" {
       }
     }
 
+    // scaling {
+    //   enabled = true
+    //   min     = 1
+    //   max     = 20
+
+    //   policy {
+    //     cooldown = "20s"
+
+    //     check "cpu" {
+    //       source = "prometheus"
+    //       query  = "nomad_client_allocs_cpu_total_percent{exported_job='countdash', task_group='api', task='api'}"
+
+    //       strategy "threshold" {
+    //         upper_bound = 0.1
+    //         delta = 1
+    //       }
+    //     }
+    //   }
+    // }
+
     service {
       name = "count-api"
       port = "9001"
@@ -29,7 +49,7 @@ job "countdash" {
 
         sidecar_task {
           resources {
-            cpu    = 50
+            cpu    = 25
             memory = 30
           }
         }
