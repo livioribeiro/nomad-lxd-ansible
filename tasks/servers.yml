@@ -10,37 +10,6 @@
     path: .tmp/ssh/id_rsa
   register: ssh_key
 
-- name: Create Packer tmp directory
-  ansible.builtin.file:
-    path: .tmp/packer
-    state: directory
-    mode: "0755"
-
-- name: Check Nomad client image
-  ansible.builtin.command: lxc image list -c l
-  register: nomad_client_image
-  changed_when: false
-
-- name: Check Nomad packer build
-  ansible.builtin.set_fact:
-    nomad_client_packer_old_hash: '{{ lookup("file", ".tmp/packer/nomad-client.hash", errors="ignore") }}'
-    nomad_client_packer_new_hash: '{{ lookup("file", "packer/nomad-client/build.pkr.hcl") | hash("sha1") }}'
-
-- name: Create Nomad client image
-  when: >-
-    ("nomad-client" not in nomad_client_image.stdout)
-    or
-    (nomad_client_packer_old_hash != nomad_client_packer_new_hash)
-  ansible.builtin.command:
-    chdir: packer/nomad-client
-    cmd: packer build -color=false build.pkr.hcl
-
-- name: Create packer file hash
-  ansible.builtin.copy:
-    content: '{{ lookup("file", "packer/nomad-client/build.pkr.hcl") | hash("sha1") }}'
-    dest: .tmp/packer/nomad-client.hash
-    mode: "0644"
-
 - name: Create nomad network
   ansible.builtin.command:
     lxc network create lxdnomadbr0 --type bridge ipv4.address=10.99.0.1/16 ipv4.nat=true ipv6.address=none
@@ -80,11 +49,8 @@
     config:
       cloud-init.user-data: &cloud_init |
         #cloud-config
-        ssh_authorized_keys:
-          - {{ ssh_key.public_key }}
-
-        packages:
-          - openssh-server
+        ssh_authorized_keys: ["{{ ssh_key.public_key }}"]
+        packages: [openssh-server]
       cloud-init.network-config: |
         version: 2
         ethernets:
@@ -92,12 +58,9 @@
             addresses:
               - {{ hostvars[item].ansible_host }}/16
             routes:
-              - to: default
-                via: {{ gateway_address }}
+              - { to: default, via: {{ gateway_address }} }
             nameservers:
-              addresses:
-                - 9.9.9.9
-                - 149.112.112.112
+              addresses: ["9.9.9.9", "149.112.112.112"]
 
 - name: Create nfs server
   community.general.lxd_container:
@@ -119,13 +82,9 @@
             addresses:
               - {{ hostvars["nfs-server"].ansible_host }}/16
             routes:
-              - to: default
-                via: {{ gateway_address }}
+              - { to: default, via: {{ gateway_address }} }
             nameservers:
-              addresses:
-                - 9.9.9.9
-                - 149.112.112.112
-
+              addresses: ["9.9.9.9", "149.112.112.112"]
 - name: Create load balancer
   community.general.lxd_container:
     name: '{{ hostvars["load-balancer"].inventory_hostname }}'
@@ -144,56 +103,9 @@
             addresses:
               - {{ hostvars["load-balancer"].ansible_host }}/16
             routes:
-              - to: default
-                via: {{ gateway_address }}
+              - { to: default, via: {{ gateway_address }} }
             nameservers:
-              addresses:
-                - 9.9.9.9
-                - 149.112.112.112
+              addresses: ["9.9.9.9", "149.112.112.112"]
     devices:
-      map_port_80:
-        type: proxy
-        listen: tcp:0.0.0.0:80
-        connect: tcp:127.0.0.1:80
-      map_port_443:
-        type: proxy
-        listen: tcp:0.0.0.0:443
-        connect: tcp:127.0.0.1:443
-
-
-- name: Create nomad clients
-  loop: '{{ groups["nomad_infra_clients"] + groups["nomad_apps_clients"] }}'
-  community.general.lxd_container:
-    name: '{{ hostvars[item].inventory_hostname }}'
-    profiles:
-      - nomad
-    state: started
-    wait_for_container: true
-    wait_for_ipv4_addresses: true
-    source:
-      type: image
-      mode: local
-      alias: nomad-client
-    config:
-      cloud-init.user-data: *cloud_init
-      limits.cpu: '1'
-      limits.memory: 4GB
-      security.nesting: 'true'
-      security.privileged: 'true'
-      raw.lxc: |-
-        lxc.apparmor.profile=unconfined
-        lxc.cgroup.devices.allow=a
-        lxc.cap.drop=
-      cloud-init.network-config: |
-        version: 2
-        ethernets:
-          eth0:
-            addresses:
-              - {{ hostvars[item].ansible_host }}/16
-            routes:
-              - to: default
-                via: {{ gateway_address }}
-            nameservers:
-              addresses:
-                - 9.9.9.9
-                - 149.112.112.112
+      map_port_80: { type: proxy, listen: tcp:0.0.0.0:80, connect: tcp:127.0.0.1:80 }
+      map_port_443: { type: proxy, listen: tcp:0.0.0.0:443, connect: tcp:127.0.0.1:443 }

@@ -1,27 +1,3 @@
-resource "vault_policy" "nomad_admin" {
-  name = "nomad-admin"
-
-  policy = <<-EOT
-    path "secret/nomad/*" {
-      capabilities = ["create", "read", "update", "patch", "delete", "list"]
-    }
-  EOT
-}
-
-resource "vault_policy" "nomad_operator" {
-  name = "nomad-operator"
-
-  policy = <<-EOT
-    path "secret/nomad/jobs/*" {
-      capabilities = ["create", "read", "update", "patch", "delete", "list"]
-    }
-
-    path "secret/nomad/jobs/system-*" {
-      capabilities = ["deny"]
-    }
-  EOT
-}
-
 resource "vault_ldap_auth_backend" "ldap" {
   depends_on = [
     nomad_job.ldap
@@ -35,79 +11,42 @@ resource "vault_ldap_auth_backend" "ldap" {
   groupdn  = "ou=groups,dc=nomad,dc=local"
 }
 
-resource "vault_identity_group" "admin" {
-  name     = "admin"
+resource "vault_identity_group" "admin_ldap" {
+  name     = "admin-ldap"
   type     = "external"
   policies = [vault_policy.nomad_admin.name]
 }
 
-resource "vault_identity_group" "operator" {
-  name     = "operator"
+resource "vault_identity_group" "operator_ldap" {
+  name     = "operator-ldap"
   type     = "external"
   policies = [vault_policy.nomad_operator.name]
 }
 
-resource "vault_identity_group_alias" "admin" {
+resource "vault_identity_group_alias" "admin_ldap" {
   name           = "admin"
   mount_accessor = vault_ldap_auth_backend.ldap.accessor
-  canonical_id   = vault_identity_group.admin.id
+  canonical_id   = vault_identity_group.admin_ldap.id
 }
 
-resource "vault_identity_group_alias" "operator" {
+resource "vault_identity_group_alias" "operator_ldap" {
   name           = "operator"
   mount_accessor = vault_ldap_auth_backend.ldap.accessor
-  canonical_id   = vault_identity_group.operator.id
+  canonical_id   = vault_identity_group.operator_ldap.id
 }
 
-resource "vault_identity_oidc_assignment" "nomad" {
-  name      = "nomad"
-  group_ids = [
-    vault_identity_group.admin.id,
-    vault_identity_group.operator.id,
-  ]
+resource "nomad_acl_binding_rule" "admin_ldap" {
+  description = "admin ldap"
+  auth_method = nomad_acl_auth_method.vault.name
+  selector    = "\"admin-ldap\" in list.roles"
+  bind_type   = "role"
+  bind_name   = "admin"
 }
 
-resource "vault_identity_oidc_key" "nomad" {
-  depends_on = [
-    vault_ldap_auth_backend.ldap
-  ]
-
-  name               = "nomad"
-  allowed_client_ids = ["*"]
-  verification_ttl   = 7200
-  rotation_period    = 3600
-  algorithm          = "RS256"
-}
-
-resource "vault_identity_oidc_client" "nomad" {
-  name = "nomad"
-  redirect_uris = [
-    "http://localhost:4649/oidc/callback",
-    "http://nomad.${var.external_domain}/ui/settings/tokens",
-    "https://nomad.${var.external_domain}/ui/settings/tokens",
-  ]
-  assignments = [
-    vault_identity_oidc_assignment.nomad.name
-  ]
-  id_token_ttl     = 1800
-  access_token_ttl = 3600
-}
-
-resource "vault_identity_oidc_scope" "groups" {
-  name        = "groups"
-  template    = "{\"groups\":{{identity.entity.groups.names}}}"
-  description = "Vault OIDC Groups Scope"
-}
-
-resource "vault_identity_oidc_provider" "nomad" {
-  name        = "nomad"
-  issuer_host = "vault.${var.external_domain}"
-
-  allowed_client_ids = [
-    vault_identity_oidc_client.nomad.client_id
-  ]
-
-  scopes_supported = [
-    vault_identity_oidc_scope.groups.name
-  ]
+resource "nomad_acl_binding_rule" "operator_ldap" {
+  description = "operator ldap"
+  auth_method = nomad_acl_auth_method.vault.name
+  selector    = "\"operator-ldap\" in list.roles"
+  bind_type   = "role"
+  bind_name   = "operator"
 }

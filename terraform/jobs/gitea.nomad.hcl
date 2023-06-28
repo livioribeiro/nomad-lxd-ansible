@@ -1,11 +1,11 @@
 variable "version" {
   type    = string
-  default = "1.19.0-rootless"
+  default = "1.19-rootless"
 }
 
 variable "namespace" {
   type    = string
-  default = "scm"
+  default = "gitea"
 }
 
 variable "gitea_host" {

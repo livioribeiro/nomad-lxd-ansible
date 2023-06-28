@@ -48,7 +48,7 @@
 
 - name: Check Vault Nomad policy
   run_once: true
-  delegate_to: vault-server1
+  delegate_to: vault-server-1
   ansible.builtin.shell:
     VAULT_TOKEN={{ vault_root_token }} vault policy read -tls-skip-verify nomad-server
   register: check_vault_token
@@ -57,7 +57,7 @@
 - name: Create Vault Nomad policy
   when: check_vault_token.rc == 2
   run_once: true
-  delegate_to: vault-server1
+  delegate_to: vault-server-1
   ansible.builtin.shell:
     stdin: |
       # Allow creating tokens under "nomad-cluster" token role. The token role name
@@ -106,7 +106,7 @@
 
 - name: Check Vault Nomad token role
   run_once: true
-  delegate_to: vault-server1
+  delegate_to: vault-server-1
   ansible.builtin.shell:
     VAULT_TOKEN={{ vault_root_token }} vault read -tls-skip-verify /auth/token/roles/nomad-cluster
   register: check_vault_token_role
@@ -116,7 +116,7 @@
 - name: Create Vault Nomad token role
   when: check_vault_token_role.rc != 0
   run_once: true
-  delegate_to: vault-server1
+  delegate_to: vault-server-1
   ansible.builtin.shell:
     stdin: |
       {
@@ -130,7 +130,7 @@
     cmd: VAULT_TOKEN={{ vault_root_token }} vault write -tls-skip-verify /auth/token/roles/nomad-cluster -
 
 - name: Create Vault Nomad token
-  delegate_to: vault-server1
+  delegate_to: vault-server-1
   ansible.builtin.shell:
     VAULT_TOKEN={{ vault_root_token }}
     vault token create

@@ -63,7 +63,7 @@
   ansible.builtin.command:
     stdin: |
       # allow access to metrics
-      agent_prefix "consul-server" {
+      agent_prefix "consul-server-" {
         policy = "read"
       }
 

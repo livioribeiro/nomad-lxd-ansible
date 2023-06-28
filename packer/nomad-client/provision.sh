@@ -3,8 +3,6 @@ set -e
 
 export DEBIAN_FRONTEND=noninteractive
 
-RESOLVED_CONF_D=/etc/systemd/resolved.conf.d
-
 GPG_HASHICORP=https://apt.releases.hashicorp.com/gpg
 GPG_HASHICORP_KEYRING=/usr/share/keyrings/hashicorp-archive-keyring.gpg
 APT_HASHICORP="deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
@@ -49,15 +47,11 @@ apt-get -q -y purge wget
 apt-get -q -y clean
 apt-get -q -y autoclean
 
-mkdir $RESOLVED_CONF_D
-mv /tmp/consul-dns.conf $RESOLVED_CONF_D/
-mv /tmp/docker-dns.conf $RESOLVED_CONF_D/
-chown root.root $RESOLVED_CONF_D/*
-chmod 644 $RESOLVED_CONF_D/*
-
 systemctl restart systemd-resolved
 
-mv /tmp/daemon.json /etc/docker/
+mv /tmp/daemon.json /etc/docker/daemon.json
 chown root.root /etc/docker/daemon.json
 chmod 644 /etc/docker/daemon.json
 systemctl restart docker
+
+mount --make-shared /

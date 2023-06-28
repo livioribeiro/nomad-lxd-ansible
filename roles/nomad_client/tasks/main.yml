@@ -1,4 +1,15 @@
 ---
+- name: Copy Nomad client certs
+  loop:
+    - cert
+    - key
+  ansible.builtin.copy:
+    src: '.tmp/certs/nomad_client/{{ item }}.pem'
+    dest: /etc/certs.d/
+    owner: nomad
+    group: nomad
+    mode: "0600"
+
 - name: Make / shared
   ansible.builtin.command: mount --make-shared /
 

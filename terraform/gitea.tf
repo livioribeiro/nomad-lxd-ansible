@@ -1,5 +1,5 @@
-resource "nomad_namespace" "system_scm" {
-  name = "scm"
+resource "nomad_namespace" "gitea" {
+  name = "gitea"
 }
 
 resource "nomad_external_volume" "gitea_data" {
@@ -11,19 +11,19 @@ resource "nomad_external_volume" "gitea_data" {
   plugin_id    = "nfs"
   volume_id    = "gitea-data"
   name         = "gitea-data"
-  namespace    = nomad_namespace.system_scm.name
+  namespace    = nomad_namespace.gitea.name
   capacity_min = "250MiB"
   capacity_max = "500MiB"
-
-  capability {
-    access_mode     = "single-node-writer"
-    attachment_mode = "file-system"
-  }
 
   parameters = {
     uid  = "1000"
     gid  = "1000"
     mode = "770"
+  }
+
+  capability {
+    access_mode     = "single-node-writer"
+    attachment_mode = "file-system"
   }
 }
 
@@ -36,7 +36,7 @@ resource "nomad_external_volume" "gitea_database_data" {
   plugin_id    = "nfs"
   volume_id    = "gitea-database-data"
   name         = "gitea-database-data"
-  namespace    = nomad_namespace.system_scm.name
+  namespace    = nomad_namespace.gitea.name
   capacity_min = "250MiB"
   capacity_max = "500MiB"
 
@@ -61,7 +61,7 @@ resource "nomad_job" "gitea" {
   hcl2 {
     enabled = true
     vars = {
-      namespace            = nomad_namespace.system_scm.name
+      namespace            = nomad_namespace.gitea.name
       data_volume_name     = nomad_external_volume.gitea_data.name
       database_volume_name = nomad_external_volume.gitea_database_data.name
       gitea_host           = "gitea.${var.apps_subdomain}.${var.external_domain}"

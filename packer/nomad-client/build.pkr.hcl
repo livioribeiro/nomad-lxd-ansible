@@ -41,36 +41,11 @@ build {
   }
 
   provisioner "file" {
-    source      = "../../roles/consul_dns/files/consul.conf"
-    destination = "/tmp/consul-dns.conf"
-  }
-
-  provisioner "file" {
-    sources = [
-      "docker-dns.conf",
-      "daemon.json",
-    ]
-    destination = "/tmp/"
+    source ="daemon.json"
+    destination = "/tmp/daemon.json"
   }
 
   provisioner "shell" {
     script = "provision.sh"
-  }
-
-  provisioner "shell" {
-    inline = ["mkdir /etc/certs.d"]
-  }
-
-  provisioner "file" {
-    source      = "../../.tmp/certs/ca/cert.pem"
-    destination = "/etc/certs.d/ca.pem"
-  }
-
-  provisioner "file" {
-    sources = [
-      "../../.tmp/certs/nomad_client/cert.pem",
-      "../../.tmp/certs/nomad_client/key.pem",
-    ]
-    destination = "/etc/certs.d/"
   }
 }

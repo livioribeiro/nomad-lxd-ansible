@@ -92,9 +92,9 @@
       - DNS:server.dc1.consul
       - DNS:consul.service.consul
       - 'DNS:consul.{{ external_domain }}'
-      - 'IP:{{ hostvars["consul-server1"].ansible_host }}'
-      - 'IP:{{ hostvars["consul-server2"].ansible_host }}'
-      - 'IP:{{ hostvars["consul-server3"].ansible_host }}'
+      - 'IP:{{ hostvars["consul-server-1"].ansible_host }}'
+      - 'IP:{{ hostvars["consul-server-2"].ansible_host }}'
+      - 'IP:{{ hostvars["consul-server-3"].ansible_host }}'
     extended_key_usage:
       - serverAuth
       - clientAuth
@@ -127,9 +127,9 @@
       - DNS:active.vault.service.consul
       - DNS:standby.vault.service.consul
       - 'DNS:vault.{{ external_domain }}'
-      - 'IP:{{ hostvars["vault-server1"].ansible_host }}'
-      - 'IP:{{ hostvars["vault-server2"].ansible_host }}'
-      - 'IP:{{ hostvars["vault-server3"].ansible_host }}'
+      - 'IP:{{ hostvars["vault-server-1"].ansible_host }}'
+      - 'IP:{{ hostvars["vault-server-2"].ansible_host }}'
+      - 'IP:{{ hostvars["vault-server-3"].ansible_host }}'
     extended_key_usage:
       - serverAuth
       - clientAuth
@@ -161,9 +161,9 @@
       - DNS:server.global.nomad
       - DNS:nomad.service.consul
       - 'DNS:nomad.{{ external_domain }}'
-      - 'IP:{{ hostvars["nomad-server1"].ansible_host }}'
-      - 'IP:{{ hostvars["nomad-server2"].ansible_host }}'
-      - 'IP:{{ hostvars["nomad-server3"].ansible_host }}'
+      - 'IP:{{ hostvars["nomad-server-1"].ansible_host }}'
+      - 'IP:{{ hostvars["nomad-server-2"].ansible_host }}'
+      - 'IP:{{ hostvars["nomad-server-3"].ansible_host }}'
     extended_key_usage:
       - serverAuth
       - clientAuth

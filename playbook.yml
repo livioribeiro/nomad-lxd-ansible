@@ -51,7 +51,7 @@
     - vault_server
 
 - name: Initialize Vault
-  hosts: vault-server1
+  hosts: vault-server-1
   roles:
     - vault_server_init
 
@@ -61,7 +61,7 @@
     - vault_server_unseal
 
 - name: Initialize Vault PKI
-  hosts: vault-server1
+  hosts: vault-server-1
   roles:
     - vault_server_pki
 
@@ -75,7 +75,7 @@
     - nomad_server
 
 - name: Initialize Nomad acl
-  hosts: nomad-server1
+  hosts: nomad-server-1
   roles:
     - nomad_server_acl
 
@@ -90,11 +90,27 @@
     - ca_cert
     - load_balancer
 
+- name: Deploy clients
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Deploy clients
+      ansible.builtin.import_tasks: tasks/clients.yml
+
+- name: Wait for clients to be ready
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Wait for clients to be ready
+      ansible.builtin.wait_for:
+        timeout: 30
+
 - name: Setup Nomad clients
   hosts: nomad_clients
   roles:
     - ca_cert
     - consul_client
+    - consul_dns
     - nomad_client
 
 - name: Setup nomad jobs
@@ -107,16 +123,16 @@
         state: present
         force_init: true
         backend_config:
-          address: '{{ hostvars["consul-server1"].ansible_host }}:8500'
+          address: '{{ hostvars["consul-server-1"].ansible_host }}:8500'
           access_token: '{{ lookup("file", ".tmp/root_token_consul.txt") }}'
         variables:
           nfs_server_host: '{{ hostvars["nfs-server"].ansible_host }}'
           external_domain: '{{ external_domain }}'
           apps_subdomain: '{{ apps_subdomain }}'
-          consul_address: '{{ hostvars["consul-server1"].ansible_host }}:8501'
+          consul_address: '{{ hostvars["consul-server-1"].ansible_host }}:8501'
           consul_scheme: https
           consul_token: '{{ lookup("file", ".tmp/root_token_consul.txt") }}'
-          nomad_address: 'https://{{ hostvars["nomad-server1"].ansible_host }}:4646'
+          nomad_address: 'https://{{ hostvars["nomad-server-1"].ansible_host }}:4646'
           nomad_secret_id: '{{ lookup("file", ".tmp/root_token_nomad.txt") }}'
-          vault_address: 'https://{{ hostvars["vault-server1"].ansible_host }}:8200'
+          vault_address: 'https://{{ hostvars["vault-server-1"].ansible_host }}:8200'
           vault_token: '{{ lookup("file", ".tmp/root_token_vault.txt") }}'

@@ -88,70 +88,42 @@ resource "nomad_acl_role" "operator" {
   }
 }
 
-resource "null_resource" "nomad_acl_auth_method" {
-  depends_on = [
-    data.vault_identity_oidc_client_creds.nomad
-  ]
+resource "nomad_acl_auth_method" "vault" {
+  name           = "vault"
+  type           = "OIDC"
+  token_locality = "global"
+  max_token_ttl  = "10m0s"
+  default        = true
 
-  provisioner "local-exec" {
-    environment = {
-      NOMAD_ADDR = var.nomad_address
-      NOMAD_TOKEN = var.nomad_secret_id
-      NOMAD_CACERT = "../.tmp/certs/ca/cert.pem"
-      NOMAD_CLIENT_CERT = "../.tmp/certs/client/cert.pem"
-      NOMAD_CLIENT_KEY = "../.tmp/certs/client/key.pem"
-      AUTH_METHOD_CONFIG = <<EOT
-{
-  "OIDCDiscoveryURL": "https://vault.10.99.0.1.nip.io/v1/identity/oidc/provider/nomad",
-  "OIDCClientID": "${data.vault_identity_oidc_client_creds.nomad.client_id}",
-  "OIDCClientSecret": "${data.vault_identity_oidc_client_creds.nomad.client_secret}",
-  "BoundAudiences": ["${data.vault_identity_oidc_client_creds.nomad.client_id}"],
-  "OIDCScopes": ["groups"],
-  "AllowedRedirectURIs": [
-    "http://localhost:4649/oidc/callback",
-    "http://nomad.10.99.0.1.nip.io/ui/settings/tokens",
-    "https://nomad.10.99.0.1.nip.io/ui/settings/tokens"
-  ],
-  "ListClaimMappings": {
-    "groups": "roles"
+  config {
+    oidc_discovery_url    = "https://vault.${var.external_domain}/v1/identity/oidc/provider/nomad"
+    oidc_client_id        = data.vault_identity_oidc_client_creds.nomad.client_id
+    oidc_client_secret    = data.vault_identity_oidc_client_creds.nomad.client_secret
+    oidc_scopes           = [vault_identity_oidc_scope.groups.name]
+    bound_audiences       = [data.vault_identity_oidc_client_creds.nomad.client_id]
+    allowed_redirect_uris = [
+      "http://localhost:4649/oidc/callback",
+      "http://nomad.${var.external_domain}/ui/settings/tokens",
+      "https://nomad.${var.external_domain}/ui/settings/tokens",
+    ]
+    list_claim_mappings = {
+      "groups" : "roles"
+    }
   }
 }
-EOT
-    }
 
-    command = <<-EOT
-      echo $AUTH_METHOD_CONFIG | \
-      nomad acl auth-method create \
-        -default=true \
-        -name=vault \
-        -token-locality=global \
-        -max-token-ttl="10m" \
-        -type=OIDC \
-        -config -
-      EOT
-  }
+resource "nomad_acl_binding_rule" "admin" {
+  description = "admin"
+  auth_method = nomad_acl_auth_method.vault.name
+  selector    = "admin in list.roles"
+  bind_type   = "role"
+  bind_name   = "admin"
+}
 
-  provisioner "local-exec" {
-    environment = {
-      NOMAD_ADDR = var.nomad_address
-      NOMAD_TOKEN = var.nomad_secret_id
-      NOMAD_CACERT = "../.tmp/certs/ca/cert.pem"
-      NOMAD_CLIENT_CERT = "../.tmp/certs/client/cert.pem"
-      NOMAD_CLIENT_KEY = "../.tmp/certs/client/key.pem"
-    }
-
-    command = "nomad acl binding-rule create -auth-method=vault -bind-type=role -bind-name='admin' -selector='admin in list.roles' || true"
-  }
-
-  provisioner "local-exec" {
-    environment = {
-      NOMAD_ADDR = var.nomad_address
-      NOMAD_TOKEN = var.nomad_secret_id
-      NOMAD_CACERT = "../.tmp/certs/ca/cert.pem"
-      NOMAD_CLIENT_CERT = "../.tmp/certs/client/cert.pem"
-      NOMAD_CLIENT_KEY = "../.tmp/certs/client/key.pem"
-    }
-
-    command = "nomad acl binding-rule create -auth-method=vault -bind-type=role -bind-name='operator' -selector='operator in list.roles' || true"
-  }
+resource "nomad_acl_binding_rule" "operator" {
+  description = "operator"
+  auth_method = nomad_acl_auth_method.vault.name
+  selector    = "operator in list.roles"
+  bind_type   = "role"
+  bind_name   = "operator"
 }

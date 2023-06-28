@@ -14,7 +14,7 @@
 
 - name: 'Check Consul policy {{ ansible_hostname }}'
   run_once: true
-  delegate_to: consul-server1
+  delegate_to: consul-server-1
   ansible.builtin.command:
     consul acl policy read
       -token {{ consul_management_token }}
@@ -28,7 +28,7 @@
 
 - name: 'Create Consul acl policy {{ ansible_hostname }}'
   when: '"policy not found" in check_consul_policy.stderr'
-  delegate_to: consul-server1
+  delegate_to: consul-server-1
   run_once: true
   ansible.builtin.command:
     stdin: '{{ policy_rules }}'
@@ -47,7 +47,7 @@
     - '"already exists" not in consul_acl_policy.stderr'
 
 - name: 'Check Consul token {{ ansible_hostname }}'
-  delegate_to: consul-server1
+  delegate_to: consul-server-1
   ansible.builtin.command:
     consul acl token read
       -token {{ consul_management_token }}
@@ -63,7 +63,7 @@
   when: '"token does not exist" in check_consul_token.stderr'
   block:
     - name: 'Create Consul token {{ ansible_hostname }}'
-      delegate_to: consul-server1
+      delegate_to: consul-server-1
       ansible.builtin.command:
         cmd:
           consul acl token create
