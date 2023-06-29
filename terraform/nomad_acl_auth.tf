@@ -41,31 +41,11 @@ resource "nomad_acl_policy" "operator" {
   description = "Nomad Operator"
   rules_hcl = <<-EOT
     namespace "system-*" {
-      policy = "read"
+      policy = "deny"
     }
 
     namespace "*" {
       policy = "write"
-    }
-
-    node {
-      policy = "read"
-    }
-
-    agent {
-      policy = "read"
-    }
-
-    operator {
-      policy = "read"
-    }
-
-    quota {
-      policy = "read"
-    }
-
-    plugin {
-      policy = "read"
     }
   EOT
 }

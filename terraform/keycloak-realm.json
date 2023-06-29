@@ -578,7 +578,7 @@
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
-    "secret" : "AObFLKhclf5YScp6BLPPMaI6K4muLmv7",
+    "secret" : "nomad-oidc-authentication-secret",
     "redirectUris" : [
       "http://localhost:4649/oidc/callback",
       "http://nomad.10.99.0.1.nip.io/ui/settings/tokens",

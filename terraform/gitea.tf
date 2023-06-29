@@ -1,5 +1,5 @@
 resource "nomad_namespace" "gitea" {
-  name = "gitea"
+  name = "system-gitea"
 }
 
 resource "nomad_external_volume" "gitea_data" {

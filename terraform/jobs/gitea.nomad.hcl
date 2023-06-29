@@ -5,7 +5,7 @@ variable "version" {
 
 variable "namespace" {
   type    = string
-  default = "gitea"
+  default = "system-gitea"
 }
 
 variable "gitea_host" {

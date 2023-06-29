@@ -1,17 +1,17 @@
-resource "nomad_namespace" "system_sso" {
-  name = "system-sso"
+resource "nomad_namespace" "system_keycloak" {
+  name = "system-keycloak"
 }
 
-resource "nomad_external_volume" "sso_database_data" {
+resource "nomad_external_volume" "keycloak_database_data" {
   depends_on = [
     data.nomad_plugin.nfs
   ]
 
   type         = "csi"
   plugin_id    = "nfs"
-  volume_id    = "sso-database-data"
-  name         = "sso-database-data"
-  namespace    = nomad_namespace.system_sso.name
+  volume_id    = "keycloak-database-data"
+  name         = "keycloak-database-data"
+  namespace    = nomad_namespace.system_keycloak.name
   capacity_min = "500MiB"
   capacity_max = "750MiB"
 
@@ -21,32 +21,32 @@ resource "nomad_external_volume" "sso_database_data" {
   }
 }
 
-resource "nomad_job" "sso" {
+resource "nomad_job" "keycloak" {
   depends_on = [nomad_job.docker_registry]
 
   jobspec = file("${path.module}/jobs/keycloak.nomad.hcl")
-  # detach = false
+  detach = false
 
   hcl2 {
     enabled = true
     vars = {
-      namespace       = nomad_namespace.system_sso.name
-      volume_name     = nomad_external_volume.sso_database_data.name
+      namespace       = nomad_namespace.system_keycloak.name
+      volume_name     = nomad_external_volume.keycloak_database_data.name
       external_domain = var.external_domain
       apps_subdomain  = var.apps_subdomain
-      realm_import    = file("./sso-realm.json")
+      realm_import    = file("./keycloak-realm.json")
     }
   }
 }
 
-resource "consul_config_entry" "sso_intention" {
+resource "consul_config_entry" "keycloak_intention" {
   kind = "service-intentions"
-  name = "sso-database"
+  name = "keycloak-database"
 
   config_json = jsonencode({
     Sources = [
       {
-        Name   = "sso"
+        Name   = "keycloak"
         Action = "allow"
       }
     ]
@@ -54,6 +54,8 @@ resource "consul_config_entry" "sso_intention" {
 }
 
 resource "nomad_acl_auth_method" "keycloak" {
+  depends_on = [nomad_job.keycloak]
+
   name           = "keycloak"
   type           = "OIDC"
   token_locality = "global"
@@ -61,9 +63,9 @@ resource "nomad_acl_auth_method" "keycloak" {
   default        = false
 
   config {
-    oidc_discovery_url    = "https://sso.${var.apps_subdomain}.${var.external_domain}/realms/nomad"
+    oidc_discovery_url    = "https://keycloak.${var.apps_subdomain}.${var.external_domain}/realms/nomad"
     oidc_client_id        = "nomad"
-    oidc_client_secret    = "AObFLKhclf5YScp6BLPPMaI6K4muLmv7"
+    oidc_client_secret    = "nomad-oidc-authentication-secret"
     oidc_scopes           = ["groups"]
     bound_audiences       = ["nomad"]
     allowed_redirect_uris = [

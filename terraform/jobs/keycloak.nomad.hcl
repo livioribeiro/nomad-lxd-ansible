@@ -10,12 +10,12 @@ variable "postgres_version" {
 
 variable "namespace" {
   type    = string
-  default = "system-sso"
+  default = "system-keycloak"
 }
 
 variable "volume_name" {
   type    = string
-  default = "sso-database-data"
+  default = "keycloak-database-data"
 }
 
 variable "external_domain" {
@@ -30,12 +30,12 @@ variable "realm_import" {
   type = string
 }
 
-job "sso" {
+job "keycloak" {
   datacenters = ["apps"]
   type        = "service"
   namespace   = var.namespace
 
-  group "sso" {
+  group "keycloak" {
     count = 1
 
     network {
@@ -47,7 +47,7 @@ job "sso" {
     }
 
     service {
-      name = "sso"
+      name = "keycloak"
       port = "http"
       tags = [
         "traefik.enable=true"
@@ -87,7 +87,7 @@ job "sso" {
 
           proxy {
             upstreams {
-              destination_name = "sso-database"
+              destination_name = "keycloak-database"
               local_bind_port  = 5432
             }
           }
@@ -123,14 +123,14 @@ job "sso" {
         KC_PROXY                 = "edge"
         KC_HOSTNAME_STRICT_HTTPS = "true"
         KC_LOG_LEVEL             = "WARN,io.quarkus:INFO,org.infinispan.CONTAINER:INFO"
-        KC_HOSTNAME              = "sso.${var.apps_subdomain}.${var.external_domain}"
+        KC_HOSTNAME              = "keycloak.${var.apps_subdomain}.${var.external_domain}"
         KC_DB                    = "postgres"
-        KC_DB_URL_HOST           = "${NOMAD_UPSTREAM_IP_sso_database}"
-        KC_DB_URL_PORT           = "${NOMAD_UPSTREAM_PORT_sso_database}"
-        KC_DB_URL_DATABASE       = "sso"
-        KC_DB_USERNAME           = "sso"
-        KC_DB_PASSWORD           = "sso"
-        JAVA_OPTS_APPEND         = "-Djgroups.dns.query=sso.service.consul"
+        KC_DB_URL_HOST           = "${NOMAD_UPSTREAM_IP_keycloak_database}"
+        KC_DB_URL_PORT           = "${NOMAD_UPSTREAM_PORT_keycloak_database}"
+        KC_DB_URL_DATABASE       = "keycloak"
+        KC_DB_USERNAME           = "keycloak"
+        KC_DB_PASSWORD           = "keycloak"
+        JAVA_OPTS_APPEND         = "-Djgroups.dns.query=keycloak.service.consul"
         KEYCLOAK_ADMIN           = "admin"
         KEYCLOAK_ADMIN_PASSWORD  = "admin"
       }
@@ -185,12 +185,12 @@ job "sso" {
       driver = "docker"
 
       config {
-        image = "postgres:15.1-alpine"
+        image = "postgres:${var.postgres_version}"
       }
 
       env {
-        POSTGRES_USER = "sso"
-        POSTGRES_PASSWORD = "sso"
+        POSTGRES_USER = "keycloak"
+        POSTGRES_PASSWORD = "keycloak"
         PGDATA = "/var/lib/postgresql/data/pgdata"
       }
 
