@@ -1,6 +1,6 @@
 variable "version" {
   type    = string
-  default = "2.6.4-debian-11-r40"
+  default = "2.6.5"
 }
 
 variable "namespace" {

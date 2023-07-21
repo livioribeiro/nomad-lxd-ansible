@@ -21,12 +21,14 @@ source "lxd" "nomad_client" {
   image           = "images:ubuntu/${var.ubuntu_version}/cloud"
   container_name  = "packer-nomad-client"
   output_image    = "nomad-client"
+
   publish_properties = {
     alias       = "nomad-client"
     description = "Nomad client image"
   }
+
   launch_config = {
-    "security.nesting" = true
+    "security.nesting"    = true
     "security.privileged" = true
   }
 }
@@ -41,11 +43,23 @@ build {
   }
 
   provisioner "file" {
-    source ="daemon.json"
+    source      = "daemon.json"
     destination = "/tmp/daemon.json"
   }
 
+  provisioner "file" {
+    source      = "docker-dns.conf"
+    destination = "/tmp/docker-dns.conf"
+  }
+
   provisioner "shell" {
+    env = {
+      GPG_HASHICORP   = "https://apt.releases.hashicorp.com/gpg"
+      GPG_DOCKER      = "https://download.docker.com/linux/ubuntu/gpg"
+      GPG_GETENVOY    = "https://deb.dl.getenvoy.io/public/gpg.8115BA8E629CC074.key"
+      CNI_PLUGINS_URL = "https://github.com/containernetworking/plugins/releases/download/v1.3.0/cni-plugins-linux-amd64-v1.2.0.tgz"
+    }
+
     script = "provision.sh"
   }
 }

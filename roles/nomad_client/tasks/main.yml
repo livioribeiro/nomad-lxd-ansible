@@ -19,21 +19,6 @@
     special_time: reboot
     job: mount --make-shared /
 
-- name: Copy docker consul resolved config
-  ansible.builtin.copy:
-    src: docker-dns.conf
-    dest: /etc/systemd/resolved.conf.d/docker.conf
-    mode: "0644"
-  notify: Restart resolved
-
-- name: Copy docker daemon config
-  ansible.builtin.copy:
-    src: daemon.json
-    dest: /etc/docker/
-    owner: root
-    mode: "0600"
-  notify: Restart docker
-
 - name: Create Consul client Nomad token
   run_once: true
   delegate_to: localhost

@@ -1,0 +1,10 @@
+---
+- name: Restart systemd-resolved
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    state: restarted
+
+- name: Restart Docker
+  ansible.builtin.systemd:
+    name: docker
+    state: restarted

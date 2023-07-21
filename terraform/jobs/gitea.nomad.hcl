@@ -1,6 +1,6 @@
 variable "version" {
   type    = string
-  default = "1.19-rootless"
+  default = "1.20.0-rootless"
 }
 
 variable "namespace" {
@@ -117,6 +117,7 @@ job "gitea" {
         volumes = [
           "local/secret_key:/var/lib/gitea/secret_key",
           "local/internal_token:/var/lib/gitea/internal_token",
+          "local/init.sh:/opt/init.sh",
         ]
       }
 

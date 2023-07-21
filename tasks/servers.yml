@@ -85,6 +85,7 @@
               - { to: default, via: {{ gateway_address }} }
             nameservers:
               addresses: ["9.9.9.9", "149.112.112.112"]
+
 - name: Create load balancer
   community.general.lxd_container:
     name: '{{ hostvars["load-balancer"].inventory_hostname }}'

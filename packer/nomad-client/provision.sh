@@ -3,17 +3,14 @@ set -e
 
 export DEBIAN_FRONTEND=noninteractive
 
-GPG_HASHICORP=https://apt.releases.hashicorp.com/gpg
 GPG_HASHICORP_KEYRING=/usr/share/keyrings/hashicorp-archive-keyring.gpg
-APT_HASHICORP="deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+APT_HASHICORP="deb [arch=$(dpkg --print-architecture) signed-by=$GPG_HASHICORP_KEYRING] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
 
-GPG_DOCKER=https://download.docker.com/linux/ubuntu/gpg
 GPG_DOCKER_KEYRING=/usr/share/keyrings/docker.gpg
-APT_DOCKER="deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+APT_DOCKER="deb [arch=$(dpkg --print-architecture) signed-by=$GPG_DOCKER_KEYRING] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
-GPG_GETENVOY='https://deb.dl.getenvoy.io/public/gpg.8115BA8E629CC074.key'
 GPG_GETENVOY_KEYRING=/usr/share/keyrings/getenvoy-keyring.gpg
-APT_GETENVOY="deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/getenvoy-keyring.gpg] https://deb.dl.getenvoy.io/public/deb/ubuntu $(lsb_release -cs) main"
+APT_GETENVOY="deb [arch=$(dpkg --print-architecture) signed-by=$GPG_GETENVOY_KEYRING] https://deb.dl.getenvoy.io/public/deb/ubuntu $(lsb_release -cs) main"
 
 CNI_PLUGINS_URL='https://github.com/containernetworking/plugins/releases/download/v1.2.0/cni-plugins-linux-amd64-v1.2.0.tgz'
 
@@ -47,6 +44,10 @@ apt-get -q -y purge wget
 apt-get -q -y clean
 apt-get -q -y autoclean
 
+mkdir /etc/systemd/resolved.conf.d/
+mv /tmp/docker-dns.conf /etc/systemd/resolved.conf.d/docker.conf
+chown root.root /etc/systemd/resolved.conf.d/docker.conf
+chmod 644 /etc/systemd/resolved.conf.d/docker.conf
 systemctl restart systemd-resolved
 
 mv /tmp/daemon.json /etc/docker/daemon.json

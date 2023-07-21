@@ -1,0 +1,32 @@
+---
+- name: Copy Docker resolved config
+  ansible.builtin.copy:
+    content: |-
+      [Resolve]
+      DNSStubListener=yes
+      DNSStubListenerExtra=172.17.0.1
+    dest: /etc/systemd/resolved.conf.d/docker.conf
+    mode: '0644'
+    owner: root
+    group: root
+  notify: Restart systemd-resolved
+
+- name: Install Docker
+  ansible.builtin.apt:
+    name: docker.io
+    state: present
+
+- name: Copy Docker config
+  ansible.builtin.copy:
+    content: |-
+      {
+        "dns": ["172.17.0.1"],
+        "registry-mirrors": [
+            "http://docker-hub-mirror.service.consul:5000"
+        ]
+      }
+    dest: /etc/docker/daemon.json
+    mode: 644
+    owner: root
+    group: root
+  notify: Restart Docker

@@ -1,4 +1,5 @@
 {
+  "dns": ["172.17.0.1"],
   "registry-mirrors": [
       "http://docker-hub-mirror.service.consul:5000"
   ]
