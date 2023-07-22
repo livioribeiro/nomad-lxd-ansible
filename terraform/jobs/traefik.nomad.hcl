@@ -3,14 +3,14 @@ variable "version" {
   default = "v2.10"
 }
 
-variable "proxy_suffix" {
-  type    = string
-  default = ""
-}
-
 variable "namespace" {
   type    = string
   default = "system-gateway"
+}
+
+variable "proxy_suffix" {
+  type    = string
+  default = ""
 }
 
 variable "consul_acl_token" {
@@ -59,6 +59,11 @@ job "traefik" {
         ]
       }
 
+      resources {
+        cpu    = 100
+        memory = 128
+      }
+
       template {
         destination     = "local/traefik.yaml"
         left_delimiter  = "[["
@@ -90,11 +95,6 @@ providers:
       token: "${var.consul_acl_token}"
 
 EOF
-      }
-
-      resources {
-        cpu    = 100
-        memory = 128
       }
     }
   }

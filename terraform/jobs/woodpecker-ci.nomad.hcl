@@ -1,11 +1,6 @@
 variable "version" {
   type    = string
-  default = "v0.15.11"
-}
-
-variable "agent_version" {
-  type    = string
-  default = "v0.15.11"
+  default = "next"
 }
 
 variable "namespace" {
@@ -182,7 +177,7 @@ job "woodpecker-ci" {
       driver = "docker"
 
       config {
-        image = "woodpeckerci/woodpecker-agent:${var.agent_version}"
+        image = "woodpeckerci/woodpecker-agent:${var.version}"
       }
 
       env {

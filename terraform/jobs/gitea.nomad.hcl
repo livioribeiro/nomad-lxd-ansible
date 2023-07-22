@@ -113,6 +113,7 @@ job "gitea" {
       config {
         image = "gitea/gitea:${var.version}"
         ports = ["http"]
+        command = "/opt/init.sh"
 
         volumes = [
           "local/secret_key:/var/lib/gitea/secret_key",
@@ -121,27 +122,50 @@ job "gitea" {
         ]
       }
 
+      template {
+        data = <<-EOT
+          #!/bin/sh
+          while ! nc -z localhost 5432
+          do
+            sleep 1
+          done
+
+          gitea migrate
+
+          if [ -z "$(gitea admin user list --admin | grep admin@example.com)" ]
+          then
+            gitea admin user create --admin --username root --password Password123 --email root@example.com
+          fi
+
+          exec /usr/bin/dumb-init -- /usr/local/bin/docker-entrypoint.sh
+        EOT
+
+        destination = "local/init.sh"
+        perms = "755"
+      }
+
       env {
-        GITEA__server__HTTP_PORT        = "${NOMAD_PORT_http}"
-        GITEA__server__DOMAIN           = "${var.gitea_host}"
-        GITEA__server__ROOT_URL         = "http://${var.gitea_host}/"
-        GITEA__security__INSTALL_LOCK   = "true"
-        GITEA__security__INTERNAL_TOKEN = "gitea_internal_token"
-        GITEA__security__SECRET_KEY     = "gitea_secret_key"
-        GITEA__database__DB_TYPE        = "postgres"
-        GITEA__database__HOST           = "${NOMAD_UPSTREAM_ADDR_gitea-database}"
-        GITEA__database__NAME           = "gitea"
-        GITEA__database__USER           = "gitea"
-        GITEA__database__PASSWD         = "gitea"
-        GITEA__cache__ADAPTER           = "redis"
-        GITEA__cache__HOST              = "redis://localhost:6379/0"
-        GITEA__queue__TYPE              = "redis"
-        GITEA__queue__CONN_STR          = "redis://localhost:6379/0"
-        GITEA__session__PROVIDER        = "redis"
-        GITEA__session__PROVIDER_CONFIG = "redis://localhost:6379/0"
-        GITEA__log__LEVEL               = "Warn"
-        GITEA__actions__ENABLED         = "true"
-        GITEA__metrics__ENABLED         = "true"
+        GITEA__server__HTTP_PORT          = "${NOMAD_PORT_http}"
+        GITEA__server__DOMAIN             = "${var.gitea_host}"
+        GITEA__server__ROOT_URL           = "http://${var.gitea_host}/"
+        GITEA__security__INSTALL_LOCK     = "true"
+        GITEA__security__INTERNAL_TOKEN   = "gitea_internal_token"
+        GITEA__security__SECRET_KEY       = "gitea_secret_key"
+        GITEA__database__DB_TYPE          = "postgres"
+        GITEA__database__HOST             = "localhost:5432"
+        GITEA__database__NAME             = "gitea"
+        GITEA__database__USER             = "gitea"
+        GITEA__database__PASSWD           = "gitea"
+        GITEA__cache__ADAPTER             = "redis"
+        GITEA__cache__HOST                = "redis://localhost:6379/0"
+        GITEA__queue__TYPE                = "redis"
+        GITEA__queue__CONN_STR            = "redis://localhost:6379/0"
+        GITEA__session__PROVIDER          = "redis"
+        GITEA__session__PROVIDER_CONFIG   = "redis://localhost:6379/0"
+        GITEA__log__LEVEL                 = "Warn"
+        GITEA__actions__ENABLED           = "true"
+        GITEA__metrics__ENABLED           = "true"
+        GITEA__webhook__ALLOWED_HOST_LIST = "woodpecker.apps.10.99.0.1.nip.io"
       }
 
       resources {

@@ -19,10 +19,15 @@ terraform {
       version = "~>3.18"
     }
 
-    # gitea = {
-    #   source  = "Lerentis/gitea"
-    #   version = "~>0.16"
-    # }
+    http = {
+      source = "hashicorp/http"
+      version = "~>3.4"
+    }
+
+    external = {
+      source = "hashicorp/external"
+      version = "~>2.3"
+    }
   }
 }
 
@@ -48,9 +53,3 @@ provider "vault" {
   token        = var.vault_token
   ca_cert_file = "../.tmp/certs/ca/cert.pem"
 }
-
-# provider "gitea" {
-#   base_url = "http://gitea.${var.apps_subdomain}.${var.external_domain}"
-#   username = "root"
-#   password = "Password123"
-# }
