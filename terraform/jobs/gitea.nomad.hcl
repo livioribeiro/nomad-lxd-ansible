@@ -50,7 +50,6 @@ job "gitea" {
 
       check {
         type     = "http"
-        port     = "http"
         path     = "/api/healthz"
         interval = "10s"
         timeout  = "5s"
@@ -125,9 +124,13 @@ job "gitea" {
       template {
         data = <<-EOT
           #!/bin/sh
+          retries=0
           while ! nc -z localhost 5432
           do
-            sleep 1
+            if [ $retries -gt 3 ]; then
+              exit 1
+            fi
+            sleep 3
           done
 
           gitea migrate
