@@ -6,28 +6,28 @@ terraform {
   required_providers {
     consul = {
       source  = "hashicorp/consul"
-      version = "~>2.17"
+      version = "~>2.18"
     }
 
     nomad = {
       source  = "hashicorp/nomad"
-      version = "~>1.4"
+      version = "~>2.0"
     }
 
     vault = {
       source  = "hashicorp/vault"
-      version = "~>3.18"
+      version = "~>3.20"
     }
 
-    http = {
-      source = "hashicorp/http"
-      version = "~>3.4"
-    }
+    # http = {
+    #   source = "hashicorp/http"
+    #   version = "~>3.4"
+    # }
 
-    external = {
-      source = "hashicorp/external"
-      version = "~>2.3"
-    }
+    # external = {
+    #   source = "hashicorp/external"
+    #   version = "~>2.3"
+    # }
   }
 }
 

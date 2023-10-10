@@ -1,6 +1,6 @@
 variable "version" {
   type    = string
-  default = "9.5.6"
+  default = "9.5.12"
 }
 
 variable "namespace" {
@@ -9,9 +9,8 @@ variable "namespace" {
 }
 
 job "grafana" {
-  datacenters = ["infra", "apps"]
-  type        = "service"
-  namespace   = var.namespace
+  type      = "service"
+  namespace = var.namespace
 
   group "grafana" {
     count = 1

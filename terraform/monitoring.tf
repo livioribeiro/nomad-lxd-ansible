@@ -49,7 +49,6 @@ resource "nomad_job" "prometheus" {
   # detach = false
 
   hcl2 {
-    enabled = true
     vars = {
       namespace        = nomad_namespace.system_monitoring.name
       consul_acl_token = data.consul_acl_token_secret_id.prometheus.secret_id
@@ -62,19 +61,6 @@ resource "nomad_job" "loki" {
   # detach = false
 
   hcl2 {
-    enabled = true
-    vars = {
-      namespace = nomad_namespace.system_monitoring.name
-    }
-  }
-}
-
-resource "nomad_job" "promtail" {
-  jobspec = file("${path.module}/jobs/promtail.nomad.hcl")
-  # detach = false
-
-  hcl2 {
-    enabled = true
     vars = {
       namespace = nomad_namespace.system_monitoring.name
     }
@@ -90,9 +76,28 @@ resource "consul_config_entry" "promtail_loki_intention" {
       {
         Name   = "system-promtail"
         Action = "allow"
+      },
+      {
+        Name   = "grafana"
+        Action = "allow"
+      },
+      {
+        Name   = "autoscaler-promtail"
+        Action = "allow"
       }
     ]
   })
+}
+
+resource "nomad_job" "promtail" {
+  jobspec = file("${path.module}/jobs/promtail.nomad.hcl")
+  # detach = false
+
+  hcl2 {
+    vars = {
+      namespace = nomad_namespace.system_monitoring.name
+    }
+  }
 }
 
 # Grafana
@@ -101,7 +106,6 @@ resource "nomad_job" "grafana" {
   # detach = false
 
   hcl2 {
-    enabled = true
     vars = {
       namespace = nomad_namespace.system_monitoring.name
     }
@@ -122,16 +126,13 @@ resource "consul_config_entry" "grafana_prometheus_intention" {
   })
 }
 
-resource "consul_config_entry" "grafana_loki_intention" {
-  kind = "service-intentions"
-  name = "loki"
+# resource "consul_config_entry" "grafana_loki_intention" {
+#   kind = "service-intentions"
+#   name = "loki"
 
-  config_json = jsonencode({
-    Sources = [
-      {
-        Name   = "grafana"
-        Action = "allow"
-      }
-    ]
-  })
-}
+#   config_json = jsonencode({
+#     Sources = [
+      
+#     ]
+#   })
+# }

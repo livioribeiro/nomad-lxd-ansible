@@ -1,6 +1,6 @@
 variable "version" {
   type    = string
-  default = "2.6.5"
+  default = "2.6.6"
 }
 
 variable "namespace" {
@@ -14,9 +14,8 @@ variable "volume_name" {
 }
 
 job "ldap" {
-  datacenters = ["infra", "apps"]
-  type        = "service"
-  namespace   = var.namespace
+  type      = "service"
+  namespace = var.namespace
 
   group "openldap" {
     count = 1

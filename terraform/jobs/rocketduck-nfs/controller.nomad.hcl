@@ -14,9 +14,9 @@ variable "nfs_server_host" {
 }
 
 job "storage-controller" {
-  datacenters = ["infra"]
-  type        = "service"
-  namespace   = var.namespace
+  type      = "service"
+  node_pool = "infra"
+  namespace = var.namespace
 
   group "controller" {
     task "controller" {

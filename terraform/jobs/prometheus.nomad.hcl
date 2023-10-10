@@ -1,6 +1,6 @@
 variable "version" {
   type    = string
-  default = "v2.45.0"
+  default = "v2.47.1"
 }
 
 variable "namespace" {
@@ -19,9 +19,9 @@ variable "vault_token" {
 }
 
 job "prometheus" {
-  datacenters = ["infra", "apps"]
-  type        = "service"
-  namespace   = var.namespace
+  type      = "service"
+  node_pool = "infra"
+  namespace = var.namespace
 
   group "prometheus" {
     count = 1
@@ -208,11 +208,11 @@ scrape_configs:
       format: [prometheus]
 
   # PROXY/TRAEFIK
-  - job_name: proxy_metrics
+  - job_name: traefik_metrics
     consul_sd_configs:
     - server: '{{ env "attr.unique.network.ip-address" }}:8500'
       token: '${var.consul_acl_token}'
-      services: [proxy]
+      services: [traefik]
 
   # GITEA
   - job_name: gitea_metrics
@@ -220,13 +220,6 @@ scrape_configs:
     - server: '{{ env "attr.unique.network.ip-address" }}:8500'
       token: '${var.consul_acl_token}'
       services: [gitea]
-
-  # CONSUL CONNECT ENVOY STATSD
-  - job_name: consul_connect_statsd_envoy_metrics
-    consul_sd_configs:
-    - server: '{{ env "attr.unique.network.ip-address" }}:8500'
-      token: '${var.consul_acl_token}'
-      services: [statsd]
 
   # CONSUL CONNECT ENVOY
   # https://www.mattmoriarity.com/2021-02-21-scraping-prometheus-metrics-with-nomad-and-consul-connect/

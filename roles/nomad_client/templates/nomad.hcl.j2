@@ -1,9 +1,9 @@
 data_dir   = "/opt/nomad/data"
-datacenter = "{{ datacenter }}"
 
 client {
   enabled           = true
   network_interface = "eth0"
+  node_pool         = "{{ node_pool }}"
 
   host_volume "docker-socket" {
     path      = "/run/docker.sock"

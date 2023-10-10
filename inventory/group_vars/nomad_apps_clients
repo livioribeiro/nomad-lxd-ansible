@@ -1,2 +1,2 @@
 ---
-datacenter: apps
+node_pool: default

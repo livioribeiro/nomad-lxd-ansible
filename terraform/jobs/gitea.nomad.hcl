@@ -24,9 +24,8 @@ variable "database_volume_name" {
 }
 
 job "gitea" {
-  datacenters = ["apps"]
-  type        = "service"
-  namespace   = var.namespace
+  type      = "service"
+  namespace = var.namespace
 
   group "app" {
     count = 1

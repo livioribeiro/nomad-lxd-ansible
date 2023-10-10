@@ -7,7 +7,6 @@ resource "nomad_job" "rocketduck_nfs_controller" {
   # detach = false
 
   hcl2 {
-    enabled = true
     vars = {
       namespace       = nomad_namespace.system_storage.name
       nfs_server_host = var.nfs_server_host
@@ -20,7 +19,6 @@ resource "nomad_job" "rocketduck_nfs_node" {
   # detach = false
 
   hcl2 {
-    enabled = true
     vars = {
       namespace       = nomad_namespace.system_storage.name
       nfs_server_host = var.nfs_server_host

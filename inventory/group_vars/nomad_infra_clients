@@ -1,2 +1,2 @@
 ---
-datacenter: infra
+node_pool: infra

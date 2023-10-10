@@ -2,12 +2,11 @@ resource "nomad_namespace" "system_keycloak" {
   name = "system-keycloak"
 }
 
-resource "nomad_external_volume" "keycloak_database_data" {
+resource "nomad_csi_volume" "keycloak_database_data" {
   depends_on = [
     data.nomad_plugin.nfs
   ]
 
-  type         = "csi"
   plugin_id    = "nfs"
   volume_id    = "keycloak-database-data"
   name         = "keycloak-database-data"
@@ -28,10 +27,9 @@ resource "nomad_job" "keycloak" {
   detach = false
 
   hcl2 {
-    enabled = true
     vars = {
       namespace       = nomad_namespace.system_keycloak.name
-      volume_name     = nomad_external_volume.keycloak_database_data.name
+      volume_name     = nomad_csi_volume.keycloak_database_data.name
       external_domain = var.external_domain
       apps_subdomain  = var.apps_subdomain
       realm_import    = file("./keycloak-realm.json")

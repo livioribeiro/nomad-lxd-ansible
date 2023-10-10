@@ -1,11 +1,6 @@
 #!/bin/sh
 set -e
 
-export DEBIAN_FRONTEND=noninteractive
-
-GPG_HASHICORP_KEYRING=/usr/share/keyrings/hashicorp-archive-keyring.gpg
-APT_HASHICORP="deb [arch=$(dpkg --print-architecture) signed-by=$GPG_HASHICORP_KEYRING] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-
 GPG_DOCKER_KEYRING=/usr/share/keyrings/docker.gpg
 APT_DOCKER="deb [arch=$(dpkg --print-architecture) signed-by=$GPG_DOCKER_KEYRING] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
@@ -14,13 +9,8 @@ APT_GETENVOY="deb [arch=$(dpkg --print-architecture) signed-by=$GPG_GETENVOY_KEY
 
 CNI_PLUGINS_URL='https://github.com/containernetworking/plugins/releases/download/v1.2.0/cni-plugins-linux-amd64-v1.2.0.tgz'
 
-cat /tmp/ssh_id_rsa.pub > /home/ubuntu/.ssh/authorized_keys
-
 apt-get -q update
 apt-get -q -y install wget
-
-wget -q -O- $GPG_HASHICORP | gpg --dearmor -o $GPG_HASHICORP_KEYRING
-echo $APT_HASHICORP > /etc/apt/sources.list.d/hashicorp.list
 
 wget -q -O- $GPG_DOCKER | gpg --dearmor -o $GPG_DOCKER_KEYRING
 echo $APT_DOCKER > /etc/apt/sources.list.d/docker.list
@@ -29,7 +19,7 @@ wget -q -O- $GPG_GETENVOY | gpg --dearmor -o $GPG_GETENVOY_KEYRING
 echo $APT_GETENVOY > /etc/apt/sources.list.d/getenvoy.list
 
 apt-get -q update
-apt-get -q -y install consul nomad docker-ce containerd.io getenvoy-envoy nfs-common
+apt-get -q -y install docker-ce containerd.io getenvoy-envoy nfs-common
 
 mkdir -p /opt/cni/bin
 wget -q -O /tmp/cni-plugins.tgz $CNI_PLUGINS_URL

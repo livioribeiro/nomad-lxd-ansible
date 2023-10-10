@@ -1,6 +1,6 @@
 variable "version" {
   type    = string
-  default = "2.8.2"
+  default = "2.8.3"
 }
 
 variable "namespace" {
@@ -14,9 +14,9 @@ variable "volume_name" {
 }
 
 job "docker-hub-mirror" {
-  datacenters = ["infra", "apps"]
-  type        = "service"
-  namespace   = var.namespace
+  type      = "service"
+  node_pool = "infra"
+  namespace = var.namespace
 
   group "registry" {
     count = 1

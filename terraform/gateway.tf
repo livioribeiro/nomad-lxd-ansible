@@ -45,7 +45,6 @@ resource "nomad_job" "proxy" {
   # detach = false
 
   hcl2 {
-    enabled = true
     vars = {
       namespace        = nomad_namespace.system_gateway.name
       proxy_suffix     = "${var.apps_subdomain}.${var.external_domain}"

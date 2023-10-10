@@ -2,12 +2,11 @@ resource "nomad_namespace" "gitea" {
   name = "system-gitea"
 }
 
-resource "nomad_external_volume" "gitea_data" {
+resource "nomad_csi_volume" "gitea_data" {
   depends_on = [
     data.nomad_plugin.nfs
   ]
 
-  type         = "csi"
   plugin_id    = "nfs"
   volume_id    = "gitea-data"
   name         = "gitea-data"
@@ -27,12 +26,11 @@ resource "nomad_external_volume" "gitea_data" {
   }
 }
 
-resource "nomad_external_volume" "gitea_database_data" {
+resource "nomad_csi_volume" "gitea_database_data" {
   depends_on = [
     data.nomad_plugin.nfs,
   ]
 
-  type         = "csi"
   plugin_id    = "nfs"
   volume_id    = "gitea-database-data"
   name         = "gitea-database-data"
@@ -59,11 +57,10 @@ resource "nomad_job" "gitea" {
   # detach = false
 
   hcl2 {
-    enabled = true
     vars = {
       namespace            = nomad_namespace.gitea.name
-      data_volume_name     = nomad_external_volume.gitea_data.name
-      database_volume_name = nomad_external_volume.gitea_database_data.name
+      data_volume_name     = nomad_csi_volume.gitea_data.name
+      database_volume_name = nomad_csi_volume.gitea_database_data.name
       gitea_host           = "gitea.${var.apps_subdomain}.${var.external_domain}"
     }
   }

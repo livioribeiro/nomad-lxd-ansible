@@ -2,12 +2,11 @@ resource "nomad_namespace" "system_registry" {
   name = "system-registry"
 }
 
-resource "nomad_external_volume" "docker_hub_proxy_data" {
+resource "nomad_csi_volume" "docker_hub_proxy_data" {
   depends_on = [
     data.nomad_plugin.nfs
   ]
 
-  type         = "csi"
   plugin_id    = "nfs"
   volume_id    = "docker-hub-proxy-data"
   name         = "docker-hub-proxy-data"
@@ -26,10 +25,9 @@ resource "nomad_job" "docker_registry" {
   detach  = false
 
   hcl2 {
-    enabled = true
     vars = {
       namespace   = nomad_namespace.system_registry.name
-      volume_name = nomad_external_volume.docker_hub_proxy_data.name
+      volume_name = nomad_csi_volume.docker_hub_proxy_data.name
     }
   }
 }

@@ -1,6 +1,5 @@
 job "nfs-example" {
-  datacenters = ["apps"]
-  type        = "service"
+  type = "service"
 
   group "example" {
     count = 3

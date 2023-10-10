@@ -1,10 +1,4 @@
 ---
-- name: Install Vault
-  ansible.builtin.apt:
-    name: vault
-    state: present
-    update_cache: true
-
 - name: Copy Vault certs
   loop:
     - cert

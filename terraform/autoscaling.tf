@@ -1,58 +1,49 @@
-# resource "nomad_namespace" "system_autoscaling" {
-#   name = "system-autoscaling"
-# }
+resource "nomad_namespace" "system_autoscaling" {
+  name = "system-autoscaling"
+}
 
-# resource "nomad_acl_policy" "nomad_autoscaler" {
-#   name      = "nomad-autoscaler"
-#   rules_hcl = <<-EOT
-#     namespace "*" {
-#       policy = "write"
-#     }
-#   EOT
-# }
+resource "nomad_acl_policy" "nomad_autoscaler" {
+  name      = "nomad-autoscaler"
 
-# resource "nomad_acl_token" "nomad_autoscaler" {
-#   name     = "nomad-autoscaler"
-#   type     = "client"
-#   policies = [nomad_acl_policy.nomad_autoscaler.name]
-# }
+  rules_hcl = <<-EOT
+    node {
+      policy = "read"
+    }
+  
+    namespace "*" {
+      policy = "write"
+    }
+  EOT
+}
 
-# resource "nomad_job" "autoscaler" {
-#   jobspec = file("${path.module}/jobs/autoscaler.nomad.hcl")
-#   # detach = false
+resource "nomad_acl_token" "nomad_autoscaler" {
+  name     = "nomad-autoscaler"
+  type     = "client"
+  policies = [nomad_acl_policy.nomad_autoscaler.name]
+}
 
-#   hcl2 {
-#     enabled = true
-#     vars = {
-#       namespace   = nomad_namespace.system_autoscaling.name
-#     }
-#   }
-# }
+resource "nomad_job" "autoscaler" {
+  jobspec = file("${path.module}/jobs/autoscaler.nomad.hcl")
+  # detach = false
 
-# resource "consul_config_entry" "nomad_autoscaler_intention" {
-#   kind = "service-intentions"
-#   name = "prometheus"
+  hcl2 {
+    vars = {
+      namespace   = nomad_namespace.system_autoscaling.name
+      nomad_token = nomad_acl_token.nomad_autoscaler.secret_id
+    }
+  }
+}
 
-#   config_json = jsonencode({
-#     Sources = [
-#       {
-#         Name   = "autoscaler"
-#         Action = "allow"
-#       }
-#     ]
-#   })
-# }
+resource "consul_config_entry" "nomad_autoscaler_intention" {
+  kind = "service-intentions"
+  name = "prometheus"
 
-# resource "consul_config_entry" "nomad_autoscaler_promtail_intention" {
-#   kind = "service-intentions"
-#   name = "loki"
-
-#   config_json = jsonencode({
-#     Sources = [
-#       {
-#         Name   = "autoscaler-promtail"
-#         Action = "allow"
-#       }
-#     ]
-#   })
-# }
+  config_json = jsonencode({
+    Sources = [
+      {
+        Name   = "autoscaler"
+        Action = "allow"
+      }
+    ]
+  })
+}

@@ -1,10 +1,4 @@
 ---
-- name: Install Nomad
-  ansible.builtin.apt:
-    name: nomad
-    state: present
-    update_cache: true
-
 - name: Copy Nomad certs
   loop:
     - cert

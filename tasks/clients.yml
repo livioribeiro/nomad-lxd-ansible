@@ -1,35 +1,4 @@
 ---
-- name: Create Packer tmp directory
-  ansible.builtin.file:
-    path: .tmp/packer
-    state: directory
-    mode: "0755"
-
-- name: Check Nomad client image
-  ansible.builtin.command: lxc image list -c l
-  register: nomad_client_image
-  changed_when: false
-
-- name: Check Nomad packer build
-  ansible.builtin.set_fact:
-    nomad_client_packer_old_hash: '{{ lookup("file", ".tmp/packer/nomad-client.hash", errors="ignore") }}'
-    nomad_client_packer_new_hash: '{{ lookup("file", "packer/nomad-client/build.pkr.hcl") | hash("sha1") }}'
-
-- name: Create Nomad client image
-  when: >-
-    ("nomad-client" not in nomad_client_image.stdout)
-    or
-    (nomad_client_packer_old_hash != nomad_client_packer_new_hash)
-  ansible.builtin.command:
-    chdir: packer/nomad-client
-    cmd: packer build -color=false build.pkr.hcl
-
-- name: Create packer file hash
-  ansible.builtin.copy:
-    content: '{{ lookup("file", "packer/nomad-client/build.pkr.hcl") | hash("sha1") }}'
-    dest: .tmp/packer/nomad-client.hash
-    mode: "0644"
-
 - name: Create nomad clients
   loop: '{{ groups["nomad_infra_clients"] + groups["nomad_apps_clients"] }}'
   community.general.lxd_container:
@@ -44,10 +13,10 @@
       mode: local
       alias: nomad-client
     config:
-      cloud-init.user-data: |
-        #cloud-config
-        ssh_authorized_keys: ['{{ lookup("file", ".tmp/ssh/id_rsa.pub") }}']
-        packages: [openssh-server]
+      # cloud-init.user-data: |
+      #   #cloud-config
+      #   ssh_authorized_keys: ['{{ lookup("file", ".tmp/ssh/id_rsa.pub") }}']
+      #   packages: [openssh-server]
       limits.cpu: '1'
       limits.memory: 4GB
       security.nesting: 'true'

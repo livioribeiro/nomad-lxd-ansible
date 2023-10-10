@@ -1,0 +1,11 @@
+---
+- name: Create ssh keys directory
+  ansible.builtin.file:
+    path: .tmp/ssh
+    state: directory
+    mode: "0755"
+
+- name: Create ssh key
+  community.crypto.openssh_keypair:
+    path: .tmp/ssh/id_rsa
+  register: ssh_key

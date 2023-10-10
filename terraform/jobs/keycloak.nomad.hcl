@@ -31,9 +31,8 @@ variable "realm_import" {
 }
 
 job "keycloak" {
-  datacenters = ["apps"]
-  type        = "service"
-  namespace   = var.namespace
+  type      = "service"
+  namespace = var.namespace
 
   group "keycloak" {
     count = 1

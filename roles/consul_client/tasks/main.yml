@@ -4,11 +4,6 @@
     consul_management_token: '{{ lookup("file", ".tmp/root_token_consul.txt") }}'
     consul_encrypt_key: '{{ lookup("file", ".tmp/encrypt_keys/consul.txt") }}'
 
-- name: Install Consul
-  ansible.builtin.apt:
-    name: consul
-    state: present
-
 - name: Define agent token
   ansible.builtin.set_fact:
     consul_agent_token: '{{ (inventory_hostname + ".agent.consul") | to_uuid(namespace="6ba7b810-9dad-11d1-80b4-00c04fd430c8") }}'

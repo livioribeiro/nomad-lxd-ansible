@@ -81,8 +81,8 @@ resource "vault_identity_oidc_assignment" "nomad" {
   group_ids = [
     vault_identity_group.admin.id,
     vault_identity_group.operator.id,
-    vault_identity_group.admin_ldap.id,
-    vault_identity_group.operator_ldap.id,
+    # vault_identity_group.admin_ldap.id,
+    # vault_identity_group.operator_ldap.id,
   ]
 }
 

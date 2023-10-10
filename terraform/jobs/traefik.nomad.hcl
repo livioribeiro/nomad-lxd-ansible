@@ -1,6 +1,6 @@
 variable "version" {
   type    = string
-  default = "v2.10"
+  default = "v3.0"
 }
 
 variable "namespace" {
@@ -19,9 +19,9 @@ variable "consul_acl_token" {
 }
 
 job "traefik" {
-  datacenters = ["infra"]
-  type        = "system"
-  namespace   = var.namespace
+  type      = "system"
+  node_pool = "infra"
+  namespace = var.namespace
 
   group "traefik" {
     network {

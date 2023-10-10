@@ -1,0 +1,45 @@
+---
+- name: Create Packer tmp directory
+  ansible.builtin.file:
+    path: .tmp/packer
+    state: directory
+    mode: "0755"
+
+- name: Check images image
+  ansible.builtin.command: lxc image list -c l
+  register: nomad_cluster_images
+  changed_when: false
+
+- name: Check Nomad packer build
+  ansible.builtin.set_fact:
+    nomad_cluster_packer_old_hash: '{{ lookup("file", ".tmp/packer/nomad-cluster.hash", errors="ignore") }}'
+    nomad_cluster_packer_new_hash: '{{ lookup("file", "packer/build.pkr.hcl") | hash("sha1") }}'
+
+- name: Init Packer
+  ansible.builtin.command:
+    chdir: packer
+    cmd: packer init build.pkr.hcl
+
+- name: Create images
+  loop:
+    - build: consul
+      image: consul
+    - build: vault
+      image: vault
+    - build: nomad_server
+      image: nomad-server
+    - build: nomad_client
+      image: nomad-client
+  when: >-
+    (item["image"] not in nomad_cluster_images.stdout)
+    or
+    (nomad_cluster_packer_old_hash != nomad_cluster_packer_new_hash)
+  ansible.builtin.command:
+    chdir: packer
+    cmd: packer build -color=false -only={{ item["build"] }}.lxd.{{ item["build"] }} build.pkr.hcl
+
+- name: Create packer file hash
+  ansible.builtin.copy:
+    content: '{{ lookup("file", "packer/build.pkr.hcl") | hash("sha1") }}'
+    dest: .tmp/packer/nomad-cluster.hash
+    mode: "0644"

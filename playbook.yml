@@ -1,4 +1,11 @@
 ---
+- name: SSH
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Generate ssh key
+      ansible.builtin.import_tasks: tasks/ssh.yml
+
 - name: Generate certificates
   hosts: localhost
   connection: local
@@ -12,6 +19,13 @@
   tasks:
     - name: Generate encryption keys
       ansible.builtin.import_tasks: tasks/encrypt_keys.yml
+
+- name: Build images
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Build images
+      ansible.builtin.import_tasks: tasks/packer.yml
 
 - name: Deploy servers
   hosts: localhost

@@ -1,6 +1,4 @@
 job "countdash" {
-  datacenters = ["apps"]
-
   group "api" {
     network {
       mode = "bridge"
@@ -10,25 +8,25 @@ job "countdash" {
       }
     }
 
-    // scaling {
-    //   enabled = true
-    //   min     = 1
-    //   max     = 20
+    scaling {
+      enabled = true
+      min     = 1
+      max     = 20
 
-    //   policy {
-    //     cooldown = "20s"
+      policy {
+        cooldown = "20s"
 
-    //     check "cpu" {
-    //       source = "prometheus"
-    //       query  = "nomad_client_allocs_cpu_total_percent{exported_job='countdash', task_group='api', task='api'}"
+        check "cpu" {
+          source = "prometheus"
+          query  = "nomad_client_allocs_cpu_total_percent{exported_job='countdash', task_group='api', task='api'}"
 
-    //       strategy "threshold" {
-    //         upper_bound = 0.1
-    //         delta = 1
-    //       }
-    //     }
-    //   }
-    // }
+          strategy "threshold" {
+            upper_bound = 0.1
+            delta = 1
+          }
+        }
+      }
+    }
 
     service {
       name = "count-api"
@@ -69,7 +67,7 @@ job "countdash" {
 
       resources {
         cpu    = 50
-        memory = 30
+        memory = 10
       }
     }
   }

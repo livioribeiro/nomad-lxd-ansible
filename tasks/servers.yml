@@ -1,15 +1,4 @@
 ---
-- name: Create ssh keys directory
-  ansible.builtin.file:
-    path: .tmp/ssh
-    state: directory
-    mode: "0755"
-
-- name: Create ssh key
-  community.crypto.openssh_keypair:
-    path: .tmp/ssh/id_rsa
-  register: ssh_key
-
 - name: Create nomad network
   ansible.builtin.command:
     lxc network create lxdnomadbr0 --type bridge ipv4.address=10.99.0.1/16 ipv4.nat=true ipv6.address=none
@@ -31,10 +20,70 @@
         pool: default
         path: /
 
-- name: Create servers
-  loop: '{{ groups["consul_servers"] + groups["vault_servers"] + groups["nomad_servers"] }}'
+- name: Create Consul servers
+  loop: '{{ groups["consul_servers"] }}' # + groups["vault_servers"] + groups["nomad_servers"] }}'
   community.general.lxd_container:
     name: '{{ hostvars[item].inventory_hostname }}'
+    profiles:
+      - nomad
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source:
+      type: image
+      mode: local
+      alias: consul
+    config:
+      # cloud-init.user-data: &cloud_init |
+      #   #cloud-config
+      #   ssh_authorized_keys: ["{{ ssh_key.public_key }}"]
+      #   packages: [openssh-server]
+      cloud-init.network-config: &network_config |
+        version: 2
+        ethernets:
+          eth0:
+            addresses:
+              - {{ hostvars[item].ansible_host }}/16
+            routes:
+              - { to: default, via: {{ gateway_address }} }
+            nameservers:
+              addresses: ["9.9.9.9", "149.112.112.112"]
+
+- name: Create Vault servers
+  loop: '{{ groups["vault_servers"] }}'
+  community.general.lxd_container:
+    name: '{{ hostvars[item].inventory_hostname }}'
+    profiles:
+      - nomad
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source:
+      type: image
+      mode: local
+      alias: vault
+    config:
+      cloud-init.network-config: *network_config
+
+- name: Create Nomad servers
+  loop: '{{ groups["nomad_servers"] }}'
+  community.general.lxd_container:
+    name: '{{ hostvars[item].inventory_hostname }}'
+    profiles:
+      - nomad
+    state: started
+    wait_for_container: true
+    wait_for_ipv4_addresses: true
+    source:
+      type: image
+      mode: local
+      alias: nomad-server
+    config:
+      cloud-init.network-config: *network_config
+
+- name: Create nfs server
+  community.general.lxd_container:
+    name: '{{ hostvars["nfs-server"].inventory_hostname }}'
     profiles:
       - nomad
     state: started
@@ -47,34 +96,12 @@
       protocol: simplestreams
       alias: 'ubuntu/{{ ubuntu_version }}/cloud'
     config:
+      security.privileged: 'true'
+      raw.apparmor: 'mount fstype=rpc_pipefs, mount fstype=nfsd,'
       cloud-init.user-data: &cloud_init |
         #cloud-config
         ssh_authorized_keys: ["{{ ssh_key.public_key }}"]
         packages: [openssh-server]
-      cloud-init.network-config: |
-        version: 2
-        ethernets:
-          eth0:
-            addresses:
-              - {{ hostvars[item].ansible_host }}/16
-            routes:
-              - { to: default, via: {{ gateway_address }} }
-            nameservers:
-              addresses: ["9.9.9.9", "149.112.112.112"]
-
-- name: Create nfs server
-  community.general.lxd_container:
-    name: '{{ hostvars["nfs-server"].inventory_hostname }}'
-    profiles:
-      - nomad
-    state: started
-    wait_for_container: true
-    wait_for_ipv4_addresses: true
-    source: *container_image_source
-    config:
-      cloud-init.user-data: *cloud_init
-      security.privileged: 'true'
-      raw.apparmor: 'mount fstype=rpc_pipefs, mount fstype=nfsd,'
       cloud-init.network-config: |
         version: 2
         ethernets:

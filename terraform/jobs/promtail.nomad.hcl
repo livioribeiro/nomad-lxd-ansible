@@ -1,6 +1,6 @@
 variable "version" {
   type    = string
-  default = "2.8.3"
+  default = "2.9.1"
 }
 
 variable "namespace" {
@@ -9,9 +9,9 @@ variable "namespace" {
 }
 
 job "promtail" {
-  datacenters = ["infra", "apps"]
-  type        = "system"
-  namespace   = var.namespace
+  type      = "system"
+  node_pool = "all"
+  namespace = var.namespace
 
   group "promtail" {
     count = 1
@@ -93,6 +93,8 @@ job "promtail" {
             pipeline_stages:
               - docker: {}
             relabel_configs:
+              - source_labels: ['__meta_docker_container_name']
+                target_label: '__host__'
               - source_labels: ['__meta_docker_container_log_stream']
                 target_label: 'stream'
               - source_labels: ['__meta_docker_container_label_com_hashicorp_nomad_alloc_id']

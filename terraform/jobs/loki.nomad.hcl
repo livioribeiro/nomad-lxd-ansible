@@ -1,6 +1,6 @@
 variable "version" {
   type    = string
-  default = "2.8.3"
+  default = "2.9.1"
 }
 
 variable "namespace" {
@@ -9,9 +9,9 @@ variable "namespace" {
 }
 
 job "loki" {
-  datacenters = ["infra", "apps"]
-  type        = "service"
-  namespace   = var.namespace
+  type      = "service"
+  node_pool = "infra"
+  namespace = var.namespace
 
   group "loki" {
     count = 1
@@ -20,7 +20,7 @@ job "loki" {
       mode = "bridge"
 
       port "http" {
-        to = 3100
+        static = 3100
       }
     }
     
@@ -74,7 +74,7 @@ job "loki" {
 
       config {
         image = "grafana/loki:${var.version}"
-        args = ["-config.file=local/loki.yaml"]
+        args = ["-config.file=/local/loki.yaml"]
         ports = ["http"]
 
         logging {
@@ -124,6 +124,10 @@ job "loki" {
               dir: /loki/wal
 
           query_range:
+            align_queries_with_step: true
+            max_retries: 5
+            cache_results: true
+
             results_cache:
               cache:
                 embedded_cache:
@@ -132,17 +136,18 @@ job "loki" {
 
           schema_config:
             configs:
-              - from: 2020-10-24
-                store: boltdb-shipper
+              - from: "2023-01-05"
+                store: tsdb
                 object_store: filesystem
-                schema: v11
+                schema: v12
                 index:
                   prefix: index_
                   period: 24h
 
           storage_config:
-            boltdb:
-              directory: /loki/index
+            tsdb_shipper:
+              active_index_directory: /loki/tsdb-index
+              cache_location: /loki/tsdb-cache
             filesystem:
               directory: /loki/chunks
         EOT

@@ -1,6 +1,4 @@
 job "hello-world" {
-  datacenters = ["apps"]
-
   group "example" {
     # 3 replicas
     count = 3
