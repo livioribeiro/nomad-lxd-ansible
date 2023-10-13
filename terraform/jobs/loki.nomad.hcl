@@ -77,9 +77,9 @@ job "loki" {
         args = ["-config.file=/local/loki.yaml"]
         ports = ["http"]
 
-        logging {
-          type = "json-file"
-        }
+        // logging {
+        //   type = "json-file"
+        // }
       }
 
       resources {

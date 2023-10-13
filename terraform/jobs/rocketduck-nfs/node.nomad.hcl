@@ -34,6 +34,10 @@ job "storage-node" {
 
         network_mode = "host" # required so the mount works even after stopping the container
         privileged = true
+
+        // logging {
+        //   type = "json-file"
+        // }
       }
 
       csi_plugin {

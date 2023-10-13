@@ -5,7 +5,7 @@ variable "version" {
 
 variable "namespace" {
   type    = string
-  default = "system-monitoring"
+  default = "system-autoscaling"
 }
 
 variable "promtail_version" {

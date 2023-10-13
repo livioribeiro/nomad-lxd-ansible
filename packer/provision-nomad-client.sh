@@ -45,4 +45,7 @@ chown root.root /etc/docker/daemon.json
 chmod 644 /etc/docker/daemon.json
 systemctl restart docker
 
+# install loki logging driver
+docker plugin install grafana/loki-docker-driver:$LOKI_DRIVER_VERSION --alias loki --grant-all-permissions
+
 mount --make-shared /

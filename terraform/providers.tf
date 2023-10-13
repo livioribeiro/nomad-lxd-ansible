@@ -18,16 +18,6 @@ terraform {
       source  = "hashicorp/vault"
       version = "~>3.20"
     }
-
-    # http = {
-    #   source = "hashicorp/http"
-    #   version = "~>3.4"
-    # }
-
-    # external = {
-    #   source = "hashicorp/external"
-    #   version = "~>2.3"
-    # }
   }
 }
 

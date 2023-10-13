@@ -73,32 +73,32 @@ resource "consul_config_entry" "promtail_loki_intention" {
 
   config_json = jsonencode({
     Sources = [
-      {
-        Name   = "system-promtail"
-        Action = "allow"
-      },
+      # {
+      #   Name   = "system-promtail"
+      #   Action = "allow"
+      # },
       {
         Name   = "grafana"
         Action = "allow"
       },
-      {
-        Name   = "autoscaler-promtail"
-        Action = "allow"
-      }
+      # {
+      #   Name   = "autoscaler-promtail"
+      #   Action = "allow"
+      # }
     ]
   })
 }
 
-resource "nomad_job" "promtail" {
-  jobspec = file("${path.module}/jobs/promtail.nomad.hcl")
-  # detach = false
+# resource "nomad_job" "promtail" {
+#   jobspec = file("${path.module}/jobs/promtail.nomad.hcl")
+#   # detach = false
 
-  hcl2 {
-    vars = {
-      namespace = nomad_namespace.system_monitoring.name
-    }
-  }
-}
+#   hcl2 {
+#     vars = {
+#       namespace = nomad_namespace.system_monitoring.name
+#     }
+#   }
+# }
 
 # Grafana
 resource "nomad_job" "grafana" {
