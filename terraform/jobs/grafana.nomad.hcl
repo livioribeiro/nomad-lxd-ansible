@@ -88,11 +88,29 @@ job "grafana" {
       config {
         image = "grafana/grafana-oss:${var.version}"
         ports = ["http"]
+
+        mount {
+          type = "bind"
+          source = "local/datasource-loki.yaml"
+          target = "/usr/share/grafana/conf/provisioning/datasources/loki.yaml"
+          readonly = true
+        }
       }
 
       resources {
         cpu    = 200
         memory = 256
+      }
+
+      template {
+        destination = "local/datasource-loki.yaml"
+        data = <<-EOT
+          apiVersion: 1
+          datasources:
+          - name: Loki
+            type: loki
+            url: http://loki.service.consul:3100
+        EOT
       }
     }
   }

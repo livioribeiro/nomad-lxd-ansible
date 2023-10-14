@@ -76,10 +76,6 @@ job "loki" {
         image = "grafana/loki:${var.version}"
         args = ["-config.file=/local/loki.yaml"]
         ports = ["http"]
-
-        // logging {
-        //   type = "json-file"
-        // }
       }
 
       resources {
