@@ -34,10 +34,6 @@
       mode: local
       alias: consul
     config:
-      # cloud-init.user-data: &cloud_init |
-      #   #cloud-config
-      #   ssh_authorized_keys: ["{{ ssh_key.public_key }}"]
-      #   packages: [openssh-server]
       cloud-init.network-config: &network_config |
         version: 2
         ethernets:
