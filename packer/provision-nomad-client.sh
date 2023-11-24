@@ -7,7 +7,7 @@ APT_DOCKER="deb [arch=$(dpkg --print-architecture) signed-by=$GPG_DOCKER_KEYRING
 GPG_GETENVOY_KEYRING=/usr/share/keyrings/getenvoy-keyring.gpg
 APT_GETENVOY="deb [arch=$(dpkg --print-architecture) signed-by=$GPG_GETENVOY_KEYRING] https://deb.dl.getenvoy.io/public/deb/ubuntu $(lsb_release -cs) main"
 
-CNI_PLUGINS_URL='https://github.com/containernetworking/plugins/releases/download/v1.2.0/cni-plugins-linux-amd64-v1.2.0.tgz'
+CNI_PLUGINS_URL='https://github.com/containernetworking/plugins/releases/download/v1.3.0/cni-plugins-linux-amd64-v1.3.0.tgz'
 
 apt-get -q update
 apt-get -q -y install wget

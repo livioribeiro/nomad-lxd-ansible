@@ -149,5 +149,5 @@
     mode: "0644"
   vars:
     nomad_encrypt_key: '{{ lookup("file", ".tmp/encrypt_keys/nomad.txt") }}'
-    consul_token: '{{ read.consul_token.content | b64decode }}'
+    consul_token: '{{ read_consul_token.content | b64decode }}'
   notify: Restart Nomad
